@@ -18,17 +18,15 @@ class DataCleaner {
     }
 
     /**
-     * Limpar todos os dados de agendamento
+     * Limpar todos os dados de agendamento (Lixeira - sem confirmação)
      */
     clearAllData() {
         try {
-            const { ipcRenderer } = require('electron');
-            
             // Obter contagem antes da limpeza
             const agendamentos = JSON.parse(localStorage.getItem('agendamentos') || '[]');
             const deletedCount = agendamentos.length;
 
-            // Limpar agendamentos
+            // Limpar TODOS os dados de agendamento
             localStorage.removeItem('agendamentos');
             sessionStorage.removeItem('agendamentos');
 
@@ -44,21 +42,34 @@ class DataCleaner {
             localStorage.removeItem('tempData');
             localStorage.removeItem('draftAgendamentos');
 
-            console.log('[SUCCESS] Todos os dados foram limpos com sucesso');
+            // Limpar configurações de filtros
+            localStorage.removeItem('filterSettings');
+            localStorage.removeItem('lastFilter');
+
+            // Limpar dados de backup
+            localStorage.removeItem('backupData');
+            localStorage.removeItem('lastBackup');
+
+            console.log(`[SUCCESS] 🗑️ Lixeira: ${deletedCount} agendamentos deletados permanentemente`);
             
             // Mostrar notificação de sucesso
-            if (window.showNotification) {
-                window.showNotification({
-                    type: 'success',
-                    title: 'Dados Limpos',
-                    message: 'Todos os dados de agendamento foram removidos com sucesso',
-                    duration: 3000
-                });
+            if (window.showToast) {
+                window.showToast(`🗑️ Lixeira: ${deletedCount} agendamentos deletados permanentemente`, 'success');
             }
 
-            return { success: true, deletedCount, message: 'Dados limpos com sucesso' };
+            // Atualizar interface imediatamente
+            if (window.loadAgendamentos) {
+                window.loadAgendamentos();
+            }
+
+            // Limpar também a interface visual
+            if (window.agendamentos) {
+                window.agendamentos = [];
+            }
+
+            return { success: true, deletedCount, message: `${deletedCount} agendamentos deletados permanentemente` };
         } catch (error) {
-            console.error('❌ Erro ao limpar dados:', error);
+            console.error('❌ Erro ao executar lixeira:', error);
             return { success: false, error: error.message };
         }
     }

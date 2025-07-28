@@ -5,6 +5,28 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [1.0.3] - 2024-12-XX
+
+### Alterado
+- **Lixeira Aprimorada**: Lixeira agora deleta todos os arquivos de agendamento sem tela de confirmação
+- **Botão de Notificações**: Renomeado de "Teste" para "Notificações" com nova funcionalidade
+- **Sistema de Notificações**: Removidas notificações de teste automáticas
+
+### Adicionado
+- **Painel de Notificações**: Nova função para visualizar notificações ativas
+- **Estatísticas de Notificações**: Resumo das notificações por tipo
+- **Limpeza Completa**: Função de lixeira agora remove todos os dados incluindo cache e configurações
+
+### Removido
+- Função `createTestNotifications()` que gerava notificações de exemplo
+- Tela de confirmação da lixeira para agilizar o processo
+- Notificações de teste automáticas desnecessárias
+
+### Melhorado
+- Interface mais limpa sem notificações de teste
+- Processo de limpeza mais eficiente e direto
+- Melhor experiência do usuário no gerenciamento de notificações
+
 ## [1.0.1] - 2024-12-XX
 
 ### Adicionado

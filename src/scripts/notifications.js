@@ -673,81 +673,54 @@ class NotificationSystem {
     }
 
     /**
-     * Função de teste para criar notificações de exemplo
+     * Mostrar painel de notificações ativas
      */
-    createTestNotifications() {
-        console.log('[DEBUG] Criando notificações de teste...');
+    showNotificationsPanel() {
+        const stats = this.getStats();
         
-        // Notificação de teste simples
+        if (stats.total === 0) {
+            this.createNotification({
+                type: 'info',
+                title: 'Notificações',
+                message: 'Nenhuma notificação ativa no momento.',
+                duration: 3000
+            });
+            return;
+        }
+
+        // Criar resumo das notificações ativas
+        let message = `${stats.total} notificação(ões) ativa(s):\n`;
+        Object.entries(stats.types).forEach(([type, count]) => {
+            const typeNames = {
+                'info': 'Informação',
+                'reminder': 'Lembrete',
+                'urgent': 'Urgente',
+                'success': 'Sucesso',
+                'warning': 'Aviso',
+                'error': 'Erro'
+            };
+            message += `• ${typeNames[type] || type}: ${count}\n`;
+        });
+
         this.createNotification({
             type: 'info',
-            title: 'Teste de Notificação',
-            message: 'Esta é uma notificação de teste para verificar se o sistema está funcionando.',
-            duration: 10000,
+            title: 'Painel de Notificações',
+            message: message,
+            duration: 5000,
             actions: [
                 {
-                    id: 'test_action',
-                    label: 'Teste OK',
-                    style: 'primary',
-                    callback: () => {
-                        console.log('[DEBUG] Ação de teste executada!');
-                        alert('Ação de teste executada com sucesso!');
-                    }
-                }
-            ]
-        });
-
-        // Notificação de lembrete
-        this.createNotification({
-            type: 'reminder',
-            title: 'Lembrete de Teste',
-            message: 'Teste de lembrete com múltiplas ações.',
-            duration: 15000,
-            data: {
-                cliente: 'Cliente Teste',
-                telefone: '(11) 99999-9999'
-            },
-            actions: [
-                {
-                    id: 'call_test',
-                    label: 'Ligar',
-                    style: 'primary',
-                    callback: (data) => {
-                        console.log('[DEBUG] Simulando ligação para:', data.telefone);
-                        alert(`Simulando ligação para: ${data.telefone}`);
-                    }
-                },
-                {
-                    id: 'dismiss_test',
-                    label: 'Dispensar',
+                    id: 'clear_all',
+                    label: 'Limpar Todas',
                     style: 'secondary',
                     callback: () => {
-                        console.log('[DEBUG] Notificação dispensada');
+                        this.clearAll();
+                        if (window.showToast) {
+                            window.showToast('Todas as notificações foram removidas', 'success');
+                        }
                     }
                 }
             ]
         });
-
-        // Notificação urgente persistente
-        this.createNotification({
-            type: 'urgent',
-            title: 'Teste Urgente',
-            message: 'Esta é uma notificação urgente persistente.',
-            persistent: true,
-            actions: [
-                {
-                    id: 'resolve_test',
-                    label: 'Resolver',
-                    style: 'primary',
-                    callback: () => {
-                        console.log('[DEBUG] Problema resolvido!');
-                        alert('Problema resolvido!');
-                    }
-                }
-            ]
-        });
-
-        console.log('[DEBUG] Notificações de teste criadas. Total:', this.notifications.size);
     }
 }
 

@@ -202,9 +202,8 @@ function setupEventListeners() {
     
     if (testNotificationBtn) {
         testNotificationBtn.addEventListener('click', () => {
-            if (window.notificationSystem && window.notificationSystem.createTestNotifications) {
-                window.notificationSystem.createTestNotifications();
-                showToast('Notificações de teste criadas', 'info');
+            if (window.notificationSystem && window.notificationSystem.showNotificationsPanel) {
+                window.notificationSystem.showNotificationsPanel();
             } else {
                 showToast('Sistema de notificações não disponível', 'error');
             }

@@ -2899,6 +2899,31 @@ input:checked + .toggle-slider:before {
     line-height: 1.4;
 }
 
+/* Estilo específico para a opção de limpeza automática */
+.clear-option.auto-clear {
+    border-color: #28a745;
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(40, 167, 69, 0.05));
+}
+
+.clear-option.auto-clear:hover {
+    border-color: #28a745;
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.2), rgba(40, 167, 69, 0.1));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.clear-option.auto-clear input[type="radio"]:checked + label {
+    color: #28a745;
+}
+
+.clear-option.auto-clear input[type="radio"]:checked + label .option-content strong {
+    color: #28a745;
+}
+
+.clear-option.auto-clear .option-icon svg {
+    color: #28a745;
+}
+
 .data-stats {
     background: var(--bg-secondary);
     padding: 20px;

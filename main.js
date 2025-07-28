@@ -179,7 +179,9 @@ function createLoginWindow() {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
-      enableRemoteModule: true
+      enableRemoteModule: true,
+      webSecurity: false,
+      allowRunningInsecureContent: true
     },
     icon: path.join(__dirname, 'logo.ico'),
     titleBarStyle: 'hidden',
@@ -216,7 +218,9 @@ function createMainWindow() {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
-      enableRemoteModule: true
+      enableRemoteModule: true,
+      webSecurity: false,
+      allowRunningInsecureContent: true
     },
     icon: path.join(__dirname, 'logo.ico'),
     titleBarStyle: 'hidden',

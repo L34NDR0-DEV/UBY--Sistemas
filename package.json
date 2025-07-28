@@ -1,6 +1,6 @@
 {
   "name": "uby-agendamentos",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Sistema de Gestão de Agendamentos UBY",
   "main": "main.js",
   "scripts": {
@@ -26,11 +26,13 @@
   "license": "MIT",
   "devDependencies": {
     "electron": "^27.0.0",
-    "electron-builder": "^24.6.4"
+    "electron-builder": "^24.6.4",
+    "sharp": "^0.34.3"
   },
   "dependencies": {
     "electron-store": "^8.1.0",
     "electron-updater": "^6.1.4",
+    "sax": "^1.4.1",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "ws": "^8.18.3"
@@ -38,19 +40,18 @@
   "build": {
     "appId": "com.uby.agendamentos",
     "productName": "UBY Sistemas - Gestão de Agendamentos",
+    "icon": "src/assets/logo-256.png",
     "directories": {
       "output": "dist"
     },
     "files": [
       "**/*",
       "!node_modules/**/*",
-      "!dist/**/*"
+      "!dist/**/*",
+      "node_modules/**/*"
     ],
-    "extraResources": [
-      {
-        "from": "node_modules/electron-store",
-        "to": "node_modules/electron-store"
-      }
+    "asarUnpack": [
+      "node_modules/**/*"
     ],
     "publish": {
       "provider": "github",

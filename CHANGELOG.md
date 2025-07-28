@@ -5,6 +5,23 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [1.0.1] - 2024-12-XX
+
+### Adicionado
+- **Lixeira Automática**: Nova funcionalidade para limpeza automática de todos os agendamentos sem confirmação
+- **Atalho de Teclado**: Ctrl+Shift+Delete para acesso rápido à limpeza automática
+- **Interface Aprimorada**: Nova opção visual na interface da lixeira com destaque especial
+
+### Corrigido
+- Sistema de limpeza de dados otimizado
+- Interface da lixeira com melhor usabilidade
+- Função `clearAllDataNoConfirm()` para limpeza sem confirmação
+
+### Melhorado
+- Experiência do usuário na gestão de dados
+- Acesso rápido às funcionalidades de limpeza
+- Visual da interface de limpeza de dados
+
 ## [1.0.0] - 2024-12-XX
 
 ### Adicionado

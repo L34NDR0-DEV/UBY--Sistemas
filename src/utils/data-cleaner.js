@@ -64,6 +64,50 @@ class DataCleaner {
     }
 
     /**
+     * Limpar todos os dados sem confirmação (para lixeira automática)
+     */
+    clearAllDataNoConfirm() {
+        try {
+            // Obter contagem antes da limpeza
+            const agendamentos = JSON.parse(localStorage.getItem('agendamentos') || '[]');
+            const deletedCount = agendamentos.length;
+
+            // Limpar agendamentos
+            localStorage.removeItem('agendamentos');
+            sessionStorage.removeItem('agendamentos');
+
+            // Limpar notificações
+            localStorage.removeItem('notifications');
+            sessionStorage.removeItem('notifications');
+
+            // Limpar cache de busca
+            localStorage.removeItem('searchCache');
+            localStorage.removeItem('searchHistory');
+
+            // Limpar dados temporários
+            localStorage.removeItem('tempData');
+            localStorage.removeItem('draftAgendamentos');
+
+            console.log(`[SUCCESS] Lixeira automática: ${deletedCount} agendamentos removidos`);
+            
+            // Mostrar notificação de sucesso sem modal
+            if (window.showToast) {
+                window.showToast(`🗑️ Lixeira: ${deletedCount} agendamentos removidos automaticamente`, 'success');
+            }
+
+            // Atualizar interface se disponível
+            if (window.loadAgendamentos) {
+                window.loadAgendamentos();
+            }
+
+            return { success: true, deletedCount, message: `${deletedCount} agendamentos removidos pela lixeira` };
+        } catch (error) {
+            console.error('❌ Erro na limpeza automática:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
      * Limpar agendamentos antigos
      */
     clearOldAppointments(daysOld = null) {

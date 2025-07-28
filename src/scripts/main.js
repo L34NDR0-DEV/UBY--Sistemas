@@ -1155,7 +1155,7 @@ window.openLocationModal = openLocationModal;
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', function() {
-    // Listener para fechar modal com ESC
+    // Listener para fechar modal com ESC e atalho de limpeza automática
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             const notificationsPanel = document.getElementById('notificationsPanel');
@@ -1164,6 +1164,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.notificationSystem.closePanel();
                 }
             }
+        }
+        
+        // Atalho Ctrl+Shift+Delete para limpeza automática
+        if (e.ctrlKey && e.shiftKey && e.key === 'Delete') {
+            e.preventDefault();
+            quickAutoClear();
         }
     });
     
@@ -1443,6 +1449,31 @@ function clearAdvancedFilters() {
 
 // ===== SISTEMA DE LIMPEZA DE DADOS =====
 
+// Função para limpeza automática rápida (sem modal)
+async function quickAutoClear() {
+    try {
+        const cleaner = window.dataCleaner;
+        const result = await cleaner.clearAllDataNoConfirm();
+        
+        if (result && result.success) {
+            // Recarregar dados
+            await loadAgendamentos();
+            
+            // Atualizar estatísticas se disponível
+            if (typeof updateDataStats === 'function') {
+                updateDataStats();
+            }
+            
+            console.log(`[SUCCESS] Limpeza automática: ${result.deletedCount} agendamentos removidos`);
+        } else {
+            throw new Error(result?.error || 'Erro desconhecido na limpeza automática');
+        }
+    } catch (error) {
+        console.error('❌ Erro na limpeza automática:', error);
+        showToast(`Erro na limpeza automática: ${error.message}`, 'error');
+    }
+}
+
 // Mostrar modal de confirmação para limpeza de dados
 function showClearDataModal() {
     const modal = document.createElement('div');
@@ -1556,6 +1587,25 @@ function showClearDataModal() {
                             <div class="option-content">
                                 <strong>⚠️ Limpar todos os dados</strong>
                                 <span>Remove TODOS os agendamentos</span>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="clear-option auto-clear">
+                        <input type="radio" id="clearAllAuto" name="clearType" value="auto">
+                        <label for="clearAllAuto">
+                            <div class="option-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M10 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M14 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <circle cx="18" cy="6" r="3" fill="#28a745"/>
+                                </svg>
+                            </div>
+                            <div class="option-content">
+                                <strong>🗑️ Lixeira Automática</strong>
+                                <span>Remove TODOS os agendamentos SEM confirmação</span>
                             </div>
                         </label>
                     </div>
@@ -1961,10 +2011,14 @@ async function confirmClearData() {
             case 'all':
                 confirmMessage = '⚠️ ATENÇÃO: Isso irá remover TODOS os agendamentos permanentemente. Esta ação não pode ser desfeita. Tem certeza absoluta?';
                 break;
+            case 'auto':
+                // Limpeza automática - sem confirmação
+                confirmMessage = null;
+                break;
         }
 
-        // Confirmar ação
-        if (!confirm(confirmMessage)) {
+        // Confirmar ação (exceto para limpeza automática)
+        if (confirmMessage && !confirm(confirmMessage)) {
             // Restaurar botão
             button.disabled = false;
             button.innerHTML = `
@@ -2002,6 +2056,10 @@ async function confirmClearData() {
             case 'all':
                 result = await cleaner.clearAllData();
                 message = 'Todos os dados foram removidos com sucesso';
+                break;
+            case 'auto':
+                result = await cleaner.clearAllDataNoConfirm();
+                message = `🗑️ Lixeira automática: ${result.deletedCount} agendamentos removidos`;
                 break;
             default:
                 throw new Error('Tipo de limpeza inválido');

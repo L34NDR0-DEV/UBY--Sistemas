@@ -5,6 +5,42 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [1.0.5] - 2024-12-XX
+
+### Corrigido
+- **Bug dos Post-its Gigantes**: Corrigido problema no CSS que fazia os post-its ficarem esticados e gigantes
+- **Dimensões dos Agendamentos**: Post-its agora têm dimensões fixas e consistentes (280px-320px de largura, 300px de altura)
+- **Botões de Ação**: Removido `flex: 1` dos botões que causava expansão excessiva
+- **Grid Layout**: Ajustado grid para `minmax(280px, 320px)` evitando esticamento em telas grandes
+- **Responsividade**: Melhorada responsividade mantendo dimensões adequadas em todas as telas
+
+### Melhorado
+- Layout mais consistente e profissional dos agendamentos
+- Melhor experiência visual com post-its de tamanho uniforme
+- Interface mais organizada e legível
+- Performance visual otimizada
+
+## [1.0.4] - 2024-12-XX
+
+### Alterado
+- **Lixeira Simplificada**: Lixeira agora deleta todos os post-its diretamente sem confirmações
+- **Modal Removido**: Removido modal de confirmação de limpeza de dados
+- **Funções Desabilitadas**: Comentadas funções relacionadas ao modal (`showClearDataModal`, `closeClearDataModal`, `confirmClearData`)
+
+### Adicionado
+- **Feedback Direto**: Toast de sucesso mostra quantos agendamentos foram deletados
+- **Ação Imediata**: Um clique na lixeira executa a limpeza instantaneamente
+
+### Removido
+- Modal de seleção de tipo de limpeza
+- Telas de confirmação desnecessárias
+- Estilos CSS do modal de limpeza
+
+### Melhorado
+- Processo de limpeza mais rápido e eficiente
+- Interface mais direta e intuitiva
+- Menos cliques para executar limpeza completa
+
 ## [1.0.3] - 2024-12-XX
 
 ### Alterado

@@ -2811,7 +2811,8 @@ input:checked + .toggle-slider:before {
     }
 }
 
-/* ===== MODAL DE LIMPEZA DE DADOS (LIXEIRA) ===== */
+/* ===== MODAL DE LIMPEZA DE DADOS (LIXEIRA) - DESABILITADO ===== */
+/*
 .clear-data-modal {
     max-width: 600px;
     width: 90%;
@@ -2855,7 +2856,9 @@ input:checked + .toggle-slider:before {
     justify-content: flex-end;
     gap: 15px;
 }
+*/
 
+/*
 .clear-options {
     margin: 20px 0;
 }
@@ -3038,3 +3041,4 @@ input:checked + .toggle-slider:before {
         width: 100%;
     }
 }
+*/

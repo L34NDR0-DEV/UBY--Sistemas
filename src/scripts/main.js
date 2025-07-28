@@ -1266,8 +1266,29 @@ function setupSearchEventListeners() {
     }
 
     if (clearDataBtn) {
-        clearDataBtn.addEventListener('click', () => {
-            showClearDataModal();
+        clearDataBtn.addEventListener('click', async () => {
+            try {
+                // Executar limpeza direta sem confirmação
+                const cleaner = window.dataCleaner;
+                const result = await cleaner.clearAllData();
+                
+                if (result && result.success) {
+                    showToast(`🗑️ Lixeira: ${result.deletedCount} agendamentos deletados permanentemente`, 'success');
+                    
+                    // Recarregar dados
+                    await loadAgendamentos();
+                    
+                    // Atualizar estatísticas se a função existir
+                    if (typeof updateDataStats === 'function') {
+                        updateDataStats();
+                    }
+                } else {
+                    throw new Error(result?.error || 'Erro desconhecido ao limpar dados');
+                }
+            } catch (error) {
+                console.error('Erro ao executar lixeira:', error);
+                showToast(`Erro ao executar lixeira: ${error.message}`, 'error');
+            }
         });
     }
 
@@ -1473,7 +1494,8 @@ async function quickAutoClear() {
     }
 }
 
-// Mostrar modal de confirmação para limpeza de dados
+// Mostrar modal de confirmação para limpeza de dados (DESABILITADO - Lixeira agora funciona diretamente)
+/*
 function showClearDataModal() {
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
@@ -1932,16 +1954,20 @@ function showClearDataModal() {
     `;
     document.head.appendChild(style);
 }
+*/
 
-// Fechar modal de limpeza de dados
+// Fechar modal de limpeza de dados (DESABILITADO - Lixeira agora funciona diretamente)
+/*
 function closeClearDataModal() {
     const modal = document.querySelector('.modal-overlay');
     if (modal) {
         modal.remove();
     }
 }
+*/
 
-// Atualizar estatísticas dos dados
+// Atualizar estatísticas dos dados (DESABILITADO - Não é mais necessário)
+/*
 function updateDataStats() {
     if (!agendamentos) return;
 
@@ -1966,8 +1992,10 @@ function updateDataStats() {
     document.getElementById('canceledCount').textContent = stats.canceled;
     document.getElementById('oldCount').textContent = stats.old;
 }
+*/
 
-// Confirmar limpeza de dados
+// Confirmar limpeza de dados (DESABILITADO - Lixeira agora funciona diretamente)
+/*
 async function confirmClearData() {
     const selectedType = document.querySelector('input[name="clearType"]:checked');
     
@@ -2098,6 +2126,7 @@ async function confirmClearData() {
         `;
     }
 }
+*/
 
 // ===== INTEGRAÇÃO WEBSOCKET =====
 

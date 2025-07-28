@@ -73,8 +73,8 @@ mainWindow.webContents.send('update-downloaded')
    "build": {
      "publish": {
        "provider": "github",
-       "owner": "uby-sistemas",
-       "repo": "agendamentos-app"
+       "owner": "L34NDR0-DEV",
+       "repo": "UBY--Sistemas"
      }
    }
    ```
@@ -124,7 +124,7 @@ npx electron-builder --publish=always
 
 #### 4. Verificar Release no GitHub
 
-1. Acesse: `https://github.com/uby-sistemas/agendamentos-app/releases`
+1. Acesse: `https://github.com/L34NDR0-DEV/UBY--Sistemas/releases`
 2. Verifique se a nova versão foi criada
 3. Confirme se os arquivos estão anexados:
    - `Setup.exe` (Windows)

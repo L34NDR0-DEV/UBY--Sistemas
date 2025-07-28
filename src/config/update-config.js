@@ -7,7 +7,7 @@ const UPDATE_CONFIG = {
     // Configurações do servidor de atualização
     server: {
         // URL base para verificação de atualizações (GitHub Releases)
-        baseUrl: 'https://api.github.com/repos/uby-sistemas/agendamentos-app/releases',
+        baseUrl: 'https://api.github.com/repos/L34NDR0-DEV/UBY--Sistemas/releases',
         
         // Timeout para requisições (em milissegundos)
         timeout: 30000,

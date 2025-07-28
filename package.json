@@ -54,8 +54,8 @@
     ],
     "publish": {
       "provider": "github",
-      "owner": "uby-sistemas",
-      "repo": "agendamentos-app"
+      "owner": "L34NDR0-DEV",
+      "repo": "UBY--Sistemas"
     },
     "win": {
       "target": "nsis"

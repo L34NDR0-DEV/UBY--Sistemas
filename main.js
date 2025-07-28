@@ -578,9 +578,11 @@ autoUpdater.on('update-not-available', (info) => {
 
 autoUpdater.on('error', (err) => {
   console.error('Erro no autoUpdater:', err);
-  // Enviar para o renderer
-  if (mainWindow) {
-    mainWindow.webContents.send('update-error', err);
+  // Não enviar erro para o renderer se for erro de "no published versions"
+  if (!err.message.includes('No published versions on GitHub')) {
+    if (mainWindow) {
+      mainWindow.webContents.send('update-error', err);
+    }
   }
 });
 
@@ -603,7 +605,13 @@ autoUpdater.on('update-downloaded', (info) => {
 // IPC handlers para o sistema de atualização
 ipcMain.on('check-for-updates', () => {
   console.log('Verificação de atualização solicitada pelo renderer');
-  autoUpdater.checkForUpdates();
+  // Verificar se há releases no GitHub antes de tentar atualizar
+  autoUpdater.checkForUpdates().catch(err => {
+    console.log('Erro ao verificar atualizações (normal se não há releases):', err.message);
+    if (mainWindow) {
+      mainWindow.webContents.send('update-not-available', { message: 'Nenhuma atualização disponível no momento' });
+    }
+  });
 });
 
 ipcMain.on('download-update', () => {

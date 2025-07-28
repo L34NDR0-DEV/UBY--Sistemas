@@ -53,7 +53,13 @@ class UpdateManager {
             });
 
             ipc.on('update-error', (event, error) => {
-                this.showError('Erro ao verificar atualizações: ' + error.message);
+                // Não mostrar erro se for relacionado a "no published versions"
+                if (error.message && error.message.includes('No published versions on GitHub')) {
+                    console.log('[UPDATER] Nenhuma versão publicada no GitHub (normal para desenvolvimento)');
+                    this.showNoUpdateMessage();
+                } else {
+                    this.showError('Erro ao verificar atualizações: ' + error.message);
+                }
             });
 
             ipc.on('download-progress', (event, progress) => {

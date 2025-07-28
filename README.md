@@ -17,19 +17,19 @@ npm run build
 
 ## 📋 Funcionalidades
 
-- ✅ Sistema de login seguro
-- ✅ Gestão completa de agendamentos
-- ✅ Notificações em tempo real
-- ✅ Sistema de atualização automática
-- ✅ Interface moderna e responsiva
-- ✅ Backup automático de dados
+* ✅ Sistema de login seguro
+* ✅ Gestão completa de agendamentos
+* ✅ Notificações em tempo real
+* ✅ Sistema de atualização automática
+* ✅ Interface moderna e responsiva
+* ✅ Backup automático de dados
 
 ## 🛠️ Tecnologias
 
-- **Electron** - Framework para aplicações desktop
-- **HTML/CSS/JavaScript** - Interface e lógica
-- **electron-updater** - Sistema de atualizações
-- **electron-store** - Armazenamento local
+* **Electron** — Framework para aplicações desktop
+* **HTML/CSS/JavaScript** — Interface e lógica
+* **electron-updater** — Atualizações automáticas via GitHub Releases
+* **electron-store** — Armazenamento local de configurações e dados
 
 ## 📁 Estrutura do Projeto
 
@@ -38,8 +38,8 @@ src/
 ├── assets/          # Recursos (imagens, ícones)
 ├── config/          # Arquivos de configuração
 ├── data/            # Dados da aplicação
-├── docs/            # Documentação
-├── scripts/         # Scripts JavaScript
+├── docs/            # Documentação e guias
+├── scripts/         # Scripts JavaScript auxiliares
 ├── styles/          # Arquivos CSS
 ├── views/           # Páginas HTML
 └── utils/           # Utilitários e helpers
@@ -47,9 +47,9 @@ src/
 
 ## 🔄 Sistema de Atualização
 
-O sistema utiliza `electron-updater` para atualizações automáticas via GitHub Releases.
+O sistema utiliza **electron-updater** para aplicar atualizações automáticas a partir de releases no GitHub.
 
-Para mais detalhes, consulte: [Guia de Atualizações](src/docs/GUIA_ATUALIZACOES.md)
+Consulte o guia: [`src/docs/GUIA_ATUALIZACOES.md`](src/docs/GUIA_ATUALIZACOES.md)
 
 ## 📦 Build e Distribuição
 
@@ -57,7 +57,7 @@ Para mais detalhes, consulte: [Guia de Atualizações](src/docs/GUIA_ATUALIZACOE
 # Build para Windows
 npm run build-win
 
-# Build e publicar
+# Publicar release no GitHub
 npm run publish
 
 # Limpar builds anteriores
@@ -66,12 +66,11 @@ npm run clean
 
 ## 🔧 Configuração
 
-As configurações do sistema estão em:
-- `src/config/update-config.js` - Configurações de atualização
-- `package.json` - Configurações do projeto e build
+* `src/config/update-config.js` — Configurações do mecanismo de atualização
+* `package.json` — Metadados do projeto (nome, versão, author, scripts)
 
 ## 📞 Suporte
 
-**Desenvolvido por:** UBY Sistemas  
-**Versão:** 1.0.0  
+**Desenvolvido por:** L34NDR0-DEV
+**Versão:** 6.0.0
 **Licença:** MIT

@@ -1,0 +1,72 @@
+{
+  "name": "uby-agendamentos",
+  "version": "1.0.0",
+  "description": "Sistema de Gestão de Agendamentos UBY",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "build-win": "electron-builder --win",
+    "build-mac": "electron-builder --mac",
+    "build-linux": "electron-builder --linux",
+    "publish": "electron-builder --publish=always",
+    "clean": "rimraf dist",
+    "version-check": "node -e \"console.log(require('./package.json').version)\"",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "echo \"Linting not configured\"",
+    "docs": "echo \"Documentation generation not configured\""
+  },
+  "keywords": [
+    "electron",
+    "agendamentos",
+    "uby"
+  ],
+  "author": "UBY Sistemas",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4"
+  },
+  "dependencies": {
+    "electron-store": "^8.1.0",
+    "electron-updater": "^6.1.4",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "ws": "^8.18.3"
+  },
+  "build": {
+    "appId": "com.uby.agendamentos",
+    "productName": "UBY Sistemas - Gestão de Agendamentos",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!node_modules/**/*",
+      "!dist/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "node_modules/electron-store",
+        "to": "node_modules/electron-store"
+      }
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "uby-sistemas",
+      "repo": "agendamentos-app"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "UBY Agendamentos",
+      "include": "installer.nsh"
+    }
+  }
+}

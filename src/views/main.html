@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UBY - Sistema de Agendamentos</title>
+    
+    <!-- Configurações de ícone da aplicação -->
+    <link rel="icon" type="image/x-icon" href="../../logo.ico">
+    <link rel="shortcut icon" type="image/x-icon" href="../../logo.ico">
+    <link rel="apple-touch-icon" href="../../logo.ico">
+    <meta name="msapplication-TileImage" content="../../logo.ico">
+    
+    <link rel="stylesheet" href="../styles/main.css">
+    <link rel="stylesheet" href="../styles/notifications.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+    <!-- Barra de controles da janela separada -->
+    <div class="window-bar">
+        <div class="window-bar-content">
+            <div class="window-bar-left">
+                <span class="window-title">UBY - Gestão de Agendamentos</span>
+            </div>
+            <div class="window-controls">
+                <button class="window-btn minimize-btn" id="minimizeBtn" title="Minimizar">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                        <rect x="2" y="5" width="8" height="2"/>
+                    </svg>
+                </button>
+                <button class="window-btn maximize-btn" id="maximizeBtn" title="Maximizar">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                        <rect x="2" y="2" width="8" height="8" stroke="currentColor" stroke-width="1" fill="none"/>
+                    </svg>
+                </button>
+                <button class="window-btn close-btn" id="closeBtn" title="Fechar">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                        <path d="M2 2L10 10M10 2L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header principal -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <div class="logo-icon">
+                    <img src="../assets/logo.png" alt="UBY Logo" class="header-logo-image">
+                </div>
+                <span class="app-title">UBY - Agendamentos</span>
+            </div>
+        </div>
+        
+        <div class="header-center">
+            <button class="header-btn user-btn" id="userName" disabled>
+                <div class="user-avatar">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </div>
+                <span class="btn-text" id="userNameText"></span>
+            </button>
+        </div>
+        
+        <div class="header-right">
+            <!-- Status de Conexão como botão não clicável -->
+            <button class="header-btn connection-btn" id="connectionStatus" title="Status da Conexão" disabled>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M2 12h20"></path>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+                <span class="btn-text">Online</span>
+                <div class="status-dot online" id="statusDot"></div>
+            </button>
+
+            <button class="header-btn som-btn" id="soundBtn" title="Configurações de Som">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+                <span class="btn-text">Som</span>
+            </button>
+            
+
+            
+            <button class="header-btn theme-btn" id="themeBtn" title="Alternar Tema">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                <span class="btn-text">Tema</span>
+            </button>
+            
+            <button class="header-btn test-btn" id="testNotificationBtn" title="Testar Notificações">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <span class="btn-text">Teste</span>
+            </button>
+            
+            <button class="header-btn sair-btn" id="exitBtn" title="Sair do Sistema" onclick="handleLogout()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/>
+                </svg>
+                <span class="btn-text">Sair</span>
+            </button>
+        </div>
+        
+        <!-- Painel de Som -->
+        <div class="sound-panel" id="soundPanel">
+            <div class="sound-header">
+                <h3>Configurações de Som</h3>
+            </div>
+            <div class="sound-controls">
+                <div class="sound-option">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="ttsEnabled" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span>Notificações por Voz (TTS)</span>
+                </div>
+                
+                <div class="volume-control">
+                    <label>Volume: <span id="volumeValue">70%</span></label>
+                    <input type="range" id="volumeSlider" min="0" max="100" value="70" class="volume-slider">
+                </div>
+                
+                <button class="test-sound-btn" id="testSoundBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                    Testar Som
+                </button>
+            </div>
+        </div>
+
+
+    </header>
+
+    <!-- Container de Notificações -->
+    <div id="notification-container" class="notification-container"></div>
+
+    <!-- Painel de controle removido - funcionalidades agora no header -->
+
+    <!-- Conteúdo principal -->
+    <main class="main-content">
+        <!-- Seção de criação de agendamento -->
+        <section class="create-section">
+            <div class="section-header">
+                <h2>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF6B00" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="16"></line>
+                        <line x1="8" y1="12" x2="16" y2="12"></line>
+                    </svg>
+                    Criar Novo Agendamento
+                </h2>
+            </div>
+            
+            <form class="agendamento-form" id="agendamentoForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="data">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF6B00" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            Data
+                        </label>
+                        <input type="date" id="data" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="horario">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF6B00" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12,6 12,12 16,14"></polyline>
+                            </svg>
+                            Horário
+                        </label>
+                        <input type="time" id="horario" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="nomeCliente">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF6B00" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            Nome do Cliente
+                        </label>
+                        <input type="text" id="nomeCliente" placeholder="Nome do cliente" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="numeroContato">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF6B00" stroke-width="2">
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                            </svg>
+                            Número de Contato
+                        </label>
+                        <input type="tel" id="numeroContato" placeholder="(99) 99999-9999" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="atendente">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF6B00" stroke-width="2">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="8.5" cy="7" r="4"></circle>
+                                <line x1="20" y1="8" x2="20" y2="14"></line>
+                                <line x1="23" y1="11" x2="17" y2="11"></line>
+                            </svg>
+                            Atendente
+                        </label>
+                        <input type="text" id="atendente" placeholder="Nome do atendente" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="status">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF6B00" stroke-width="2">
+                                <polyline points="9,11 12,14 22,4"></polyline>
+                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                            </svg>
+                            Status
+                        </label>
+                        <select id="status" required>
+                            <option value="">Selecione...</option>
+                            <option value="Com Motorista">Com Motorista</option>
+                            <option value="Aguardando Motorista">Aguardando Motorista</option>
+                            <option value="Em Andamento">Em Andamento</option>
+                            <option value="Pendente">Pendente</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cidade">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF6B00" stroke-width="2">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg>
+                            Cidade
+                        </label>
+                        <select id="cidade" required>
+                            <option value="">Selecione...</option>
+                            <optgroup label="Minas Gerais">
+                                <option value="ALPINÓPOLIS">ALPINÓPOLIS</option>
+                                <option value="ALTEROSA">ALTEROSA</option>
+                                <option value="ARCEBURGO">ARCEBURGO</option>
+                                <option value="AREADO">AREADO</option>
+                                <option value="BAMBUÍ">BAMBUÍ</option>
+                                <option value="BANDEIRA DO SUL">BANDEIRA DO SUL</option>
+                                <option value="BOA ESPERANÇA">BOA ESPERANÇA</option>
+                                <option value="BOM JESUS DA PENHA">BOM JESUS DA PENHA</option>
+                                <option value="BOTELHOS">BOTELHOS</option>
+                                <option value="CABO VERDE">CABO VERDE</option>
+                                <option value="CAMPESTRE">CAMPESTRE</option>
+                                <option value="CAMPO DO MEIO">CAMPO DO MEIO</option>
+                                <option value="CAMPOS GERAIS">CAMPOS GERAIS</option>
+                                <option value="CARMO DO RIO CLARO">CARMO DO RIO CLARO</option>
+                                <option value="CAPITÓLIO">CAPITÓLIO</option>
+                                <option value="CONCEIÇÃO DA APARECIDA">CONCEIÇÃO DA APARECIDA</option>
+                                <option value="GUAPÉ">GUAPÉ</option>
+                                <option value="GUARANÉSIA">GUARANÉSIA</option>
+                                <option value="ILICÍNEA">ILICÍNEA</option>
+                                <option value="JACUÍ">JACUÍ</option>
+                                <option value="JURUAIA">JURUAIA</option>
+                                <option value="MONTE BELO">MONTE BELO</option>
+                                <option value="MONTE SANTO DE MINAS">MONTE SANTO DE MINAS</option>
+                                <option value="MUZAMBINHO">MUZAMBINHO</option>
+                                <option value="NEPOMUCENO">NEPOMUCENO</option>
+                                <option value="NOVA RESENDE">NOVA RESENDE</option>
+                                <option value="PIUMHI">PIUMHI</option>
+                                <option value="SÃO JOSÉ DA BARRA">SÃO JOSÉ DA BARRA</option>
+                            </optgroup>
+                            <optgroup label="São Paulo">
+                                <option value="CACONDE">CACONDE</option>
+                                <option value="CÂNDIDO MOTA">CÂNDIDO MOTA</option>
+                                <option value="DIVINOLÂNDIA">DIVINOLÂNDIA</option>
+                                <option value="ITOBI">ITOBI</option>
+                                <option value="MOCOCA">MOCOCA</option>
+                                <option value="PALMITAL">PALMITAL</option>
+                                <option value="PARAGUAÇU PAULISTA">PARAGUAÇU PAULISTA</option>
+                                <option value="SÃO JOSÉ DO RIO PARDO">SÃO JOSÉ DO RIO PARDO</option>
+                                <option value="SÃO SEBASTIÃO DA GRAMA">SÃO SEBASTIÃO DA GRAMA</option>
+                                <option value="TAPIRATIBA">TAPIRATIBA</option>
+                                <option value="TARUMÃ">TARUMÃ</option>
+                                <option value="VARGEM GRANDE DO SUL">VARGEM GRANDE DO SUL</option>
+                            </optgroup>
+                            <optgroup label="Mato Grosso do Sul">
+                                <option value="AQUIDAUANA">AQUIDAUANA</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="linkCoordenadas">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF6B00" stroke-width="2">
+                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                            </svg>
+                            Link de Coordenadas
+                        </label>
+                        <input type="url" id="linkCoordenadas" placeholder="https://maps.google.com/...">
+                    </div>
+                </div>
+                
+                <div class="form-group full-width">
+                    <label for="observacoes">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF6B00" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14,2 14,8 20,8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10,9 9,9 8,9"></polyline>
+                        </svg>
+                        Observações
+                    </label>
+                    <textarea id="observacoes" placeholder="Detalhes importantes do agendamento..." rows="3"></textarea>
+                </div>
+                
+                <button type="submit" class="create-btn" id="createBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="16"></line>
+                        <line x1="8" y1="12" x2="16" y2="12"></line>
+                    </svg>
+                    CRIAR AGENDAMENTO
+                </button>
+            </form>
+        </section>
+
+        <!-- Seção de visualização dos agendamentos -->
+        <section class="agendamentos-section">
+            <div class="section-header">
+                <h2>Agendamentos</h2>
+            </div>
+            
+            <div class="tabs-and-search">
+                <!-- Barra de busca e controles à esquerda -->
+                <div class="search-container">
+                    <div class="search-input-wrapper">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            class="search-input" 
+                            placeholder="Buscar agendamentos..."
+                            autocomplete="off"
+                            title="Digite para buscar por cliente, contato, atendente, cidade, status ou observações"
+                        >
+                        <button type="button" id="clearSearch" class="clear-search" title="Limpar busca">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <!-- Botão Buscar -->
+                    <button type="button" id="searchBtn" class="search-btn" title="Executar busca">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                        Buscar
+                    </button>
+                    
+                    <!-- Filtros avançados -->
+                    <div class="search-filters" id="searchFilters">
+                        <div class="filter-group">
+                            <label for="filterStatus">Status:</label>
+                            <select id="filterStatus" class="filter-select">
+                                <option value="">Todos</option>
+                                <option value="Com Motorista">Com Motorista</option>
+                                <option value="Aguardando Motorista">Aguardando Motorista</option>
+                                <option value="Em Andamento">Em Andamento</option>
+                                <option value="Pendente">Pendente</option>
+                                <option value="Concluído">Concluído</option>
+                                <option value="Cancelado">Cancelado</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label for="filterCidade">Cidade:</label>
+                            <select id="filterCidade" class="filter-select">
+                                <option value="">Todas</option>
+                                <optgroup label="Minas Gerais">
+                                    <option value="ALPINÓPOLIS">ALPINÓPOLIS</option>
+                                    <option value="ALTEROSA">ALTEROSA</option>
+                                    <option value="ARCEBURGO">ARCEBURGO</option>
+                                    <option value="AREADO">AREADO</option>
+                                    <option value="BAMBUÍ">BAMBUÍ</option>
+                                    <option value="BANDEIRA DO SUL">BANDEIRA DO SUL</option>
+                                    <option value="BOA ESPERANÇA">BOA ESPERANÇA</option>
+                                    <option value="BOM JESUS DA PENHA">BOM JESUS DA PENHA</option>
+                                    <option value="BOTELHOS">BOTELHOS</option>
+                                    <option value="CABO VERDE">CABO VERDE</option>
+                                    <option value="CAMPESTRE">CAMPESTRE</option>
+                                    <option value="CAMPO DO MEIO">CAMPO DO MEIO</option>
+                                    <option value="CAMPOS GERAIS">CAMPOS GERAIS</option>
+                                    <option value="CARMO DO RIO CLARO">CARMO DO RIO CLARO</option>
+                                    <option value="CAPITÓLIO">CAPITÓLIO</option>
+                                    <option value="CONCEIÇÃO DA APARECIDA">CONCEIÇÃO DA APARECIDA</option>
+                                    <option value="GUAPÉ">GUAPÉ</option>
+                                    <option value="GUARANÉSIA">GUARANÉSIA</option>
+                                    <option value="ILICÍNEA">ILICÍNEA</option>
+                                    <option value="JACUÍ">JACUÍ</option>
+                                    <option value="JURUAIA">JURUAIA</option>
+                                    <option value="MONTE BELO">MONTE BELO</option>
+                                    <option value="MONTE SANTO DE MINAS">MONTE SANTO DE MINAS</option>
+                                    <option value="MUZAMBINHO">MUZAMBINHO</option>
+                                    <option value="NEPOMUCENO">NEPOMUCENO</option>
+                                    <option value="NOVA RESENDE">NOVA RESENDE</option>
+                                    <option value="PIUMHI">PIUMHI</option>
+                                    <option value="SÃO JOSÉ DA BARRA">SÃO JOSÉ DA BARRA</option>
+                                </optgroup>
+                                <optgroup label="São Paulo">
+                                    <option value="CACONDE">CACONDE</option>
+                                    <option value="CÂNDIDO MOTA">CÂNDIDO MOTA</option>
+                                    <option value="DIVINOLÂNDIA">DIVINOLÂNDIA</option>
+                                    <option value="ITOBI">ITOBI</option>
+                                    <option value="MOCOCA">MOCOCA</option>
+                                    <option value="PALMITAL">PALMITAL</option>
+                                    <option value="PARAGUAÇU PAULISTA">PARAGUAÇU PAULISTA</option>
+                                    <option value="SÃO JOSÉ DO RIO PARDO">SÃO JOSÉ DO RIO PARDO</option>
+                                    <option value="SÃO SEBASTIÃO DA GRAMA">SÃO SEBASTIÃO DA GRAMA</option>
+                                    <option value="TAPIRATIBA">TAPIRATIBA</option>
+                                    <option value="TARUMÃ">TARUMÃ</option>
+                                    <option value="VARGEM GRANDE DO SUL">VARGEM GRANDE DO SUL</option>
+                                </optgroup>
+                                <optgroup label="Mato Grosso do Sul">
+                                    <option value="AQUIDAUANA">AQUIDAUANA</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label for="filterAtendente">Atendente:</label>
+                            <input type="text" id="filterAtendente" class="filter-input" placeholder="Nome do atendente">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label for="filterDataInicio">Data Início:</label>
+                            <input type="date" id="filterDataInicio" class="filter-input">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label for="filterDataFim">Data Fim:</label>
+                            <input type="date" id="filterDataFim" class="filter-input">
+                        </div>
+                        
+                        <div class="filter-actions">
+                            <button type="button" id="applyFilters" class="btn-filter-apply">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"></polygon>
+                                </svg>
+                                Aplicar
+                            </button>
+                            <button type="button" id="clearFilters" class="btn-filter-clear">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                                Limpar
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Botão para mostrar/ocultar filtros -->
+                    <button type="button" id="toggleFilters" class="toggle-filters" title="Filtros avançados">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"></polygon>
+                        </svg>
+                    </button>
+                    
+                    <!-- Botão para limpar dados -->
+                    <button type="button" id="clearDataBtn" class="clear-data-btn" title="Limpar dados de agendamento">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3,6 5,6 21,6"></polyline>
+                            <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                    </button>
+                    
+                    <!-- Abas após a lixeira -->
+                    <button class="tab-btn active" data-tab="hoje" title="Agendamentos de hoje">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        HOJE
+                    </button>
+                    <button class="tab-btn" data-tab="futuros" title="Agendamentos futuros">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                            <circle cx="8" cy="16" r="2"></circle>
+                        </svg>
+                        FUTUROS
+                    </button>
+                    <button class="tab-btn" data-tab="historico" title="Histórico de agendamentos">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12,6 12,12 16,14"></polyline>
+                        </svg>
+                        HISTÓRICO
+                    </button>
+                    <button class="tab-btn" data-tab="concluidos" title="Agendamentos concluídos">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20,6 9,17 4,12"></polyline>
+                        </svg>
+                        CONCLUÍDOS
+                    </button>
+                    <button class="tab-btn" data-tab="cancelados" title="Agendamentos cancelados">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="15" y1="9" x2="9" y2="15"></line>
+                            <line x1="9" y1="9" x2="15" y2="15"></line>
+                        </svg>
+                        CANCELADOS
+                    </button>
+                </div>
+            </div>
+            
+            <div class="agendamentos-container" id="agendamentosContainer">
+                <div class="empty-state">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <h3>Nenhum agendamento encontrado</h3>
+                    <p>Os agendamentos aparecerão aqui quando criados.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal de edição -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Editar Agendamento</h3>
+                <button class="close-modal" id="closeEditModal">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <form id="editForm">
+                <!-- Campos similares ao formulário de criação -->
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="editData">Data</label>
+                        <input type="date" id="editData" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editHorario">Horário</label>
+                        <input type="time" id="editHorario" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editNomeCliente">Nome do Cliente</label>
+                        <input type="text" id="editNomeCliente" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editNumeroContato">Número de Contato</label>
+                        <input type="tel" id="editNumeroContato" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editAtendente">Atendente</label>
+                        <input type="text" id="editAtendente" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editStatus">Status</label>
+                        <select id="editStatus" required>
+                            <option value="Com Motorista">Com Motorista</option>
+                            <option value="Aguardando Motorista">Aguardando Motorista</option>
+                            <option value="Em Andamento">Em Andamento</option>
+                            <option value="Pendente">Pendente</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editCidade">Cidade</label>
+                        <select id="editCidade" required>
+                            <optgroup label="Minas Gerais">
+                                <option value="ALPINÓPOLIS">ALPINÓPOLIS</option>
+                                <option value="ALTEROSA">ALTEROSA</option>
+                                <option value="ARCEBURGO">ARCEBURGO</option>
+                                <option value="AREADO">AREADO</option>
+                                <option value="BAMBUÍ">BAMBUÍ</option>
+                                <option value="BANDEIRA DO SUL">BANDEIRA DO SUL</option>
+                                <option value="BOA ESPERANÇA">BOA ESPERANÇA</option>
+                                <option value="BOM JESUS DA PENHA">BOM JESUS DA PENHA</option>
+                                <option value="BOTELHOS">BOTELHOS</option>
+                                <option value="CABO VERDE">CABO VERDE</option>
+                                <option value="CAMPESTRE">CAMPESTRE</option>
+                                <option value="CAMPO DO MEIO">CAMPO DO MEIO</option>
+                                <option value="CAMPOS GERAIS">CAMPOS GERAIS</option>
+                                <option value="CARMO DO RIO CLARO">CARMO DO RIO CLARO</option>
+                                <option value="CAPITÓLIO">CAPITÓLIO</option>
+                                <option value="CONCEIÇÃO DA APARECIDA">CONCEIÇÃO DA APARECIDA</option>
+                                <option value="GUAPÉ">GUAPÉ</option>
+                                <option value="GUARANÉSIA">GUARANÉSIA</option>
+                                <option value="ILICÍNEA">ILICÍNEA</option>
+                                <option value="JACUÍ">JACUÍ</option>
+                                <option value="JURUAIA">JURUAIA</option>
+                                <option value="MONTE BELO">MONTE BELO</option>
+                                <option value="MONTE SANTO DE MINAS">MONTE SANTO DE MINAS</option>
+                                <option value="MUZAMBINHO">MUZAMBINHO</option>
+                                <option value="NEPOMUCENO">NEPOMUCENO</option>
+                                <option value="NOVA RESENDE">NOVA RESENDE</option>
+                                <option value="PIUMHI">PIUMHI</option>
+                                <option value="SÃO JOSÉ DA BARRA">SÃO JOSÉ DA BARRA</option>
+                            </optgroup>
+                            <optgroup label="São Paulo">
+                                <option value="CACONDE">CACONDE</option>
+                                <option value="CÂNDIDO MOTA">CÂNDIDO MOTA</option>
+                                <option value="DIVINOLÂNDIA">DIVINOLÂNDIA</option>
+                                <option value="ITOBI">ITOBI</option>
+                                <option value="MOCOCA">MOCOCA</option>
+                                <option value="PALMITAL">PALMITAL</option>
+                                <option value="PARAGUAÇU PAULISTA">PARAGUAÇU PAULISTA</option>
+                                <option value="SÃO JOSÉ DO RIO PARDO">SÃO JOSÉ DO RIO PARDO</option>
+                                <option value="SÃO SEBASTIÃO DA GRAMA">SÃO SEBASTIÃO DA GRAMA</option>
+                                <option value="TAPIRATIBA">TAPIRATIBA</option>
+                                <option value="TARUMÃ">TARUMÃ</option>
+                                <option value="VARGEM GRANDE DO SUL">VARGEM GRANDE DO SUL</option>
+                            </optgroup>
+                            <optgroup label="Mato Grosso do Sul">
+                                <option value="AQUIDAUANA">AQUIDAUANA</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editLinkCoordenadas">Link de Coordenadas</label>
+                        <input type="url" id="editLinkCoordenadas">
+                    </div>
+                </div>
+                <div class="form-group full-width">
+                    <label for="editObservacoes">Observações</label>
+                    <textarea id="editObservacoes" rows="3"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancelEdit">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de cancelamento -->
+    <div class="modal" id="cancelModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Cancelar Agendamento</h3>
+                <button class="close-modal" id="closeCancelModal">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <form id="cancelForm">
+                <div class="form-group full-width">
+                    <label for="cancelReason">Motivo do Cancelamento *</label>
+                    <textarea id="cancelReason" placeholder="Descreva o motivo do cancelamento..." rows="4" required></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancelCancelation">Voltar</button>
+                    <button type="submit" class="btn-danger">Confirmar Cancelamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de compartilhamento -->
+    <div class="modal share-modal" id="shareModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title-container">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="modal-icon">
+                        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                        <polyline points="16,6 12,2 8,6"></polyline>
+                        <line x1="12" y1="2" x2="12" y2="15"></line>
+                    </svg>
+                    <h3>Compartilhar Agendamento</h3>
+                </div>
+                <button class="close-modal" id="closeShareModal">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="share-content">
+                <!-- Informações do agendamento a ser compartilhado -->
+                <div class="agendamento-preview" id="agendamentoPreview">
+                    <div class="preview-header">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="section-icon">
+                            <path d="M9 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-4m-4-4v12"></path>
+                            <path d="M9 7l3-3 3 3"></path>
+                        </svg>
+                        <h4>Agendamento Selecionado</h4>
+                    </div>
+                    <div class="preview-info">
+                        <div class="preview-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="item-icon">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            <strong>Cliente:</strong> <span id="previewCliente"></span>
+                        </div>
+                        <div class="preview-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="item-icon">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            <strong>Data:</strong> <span id="previewData"></span>
+                        </div>
+                        <div class="preview-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="item-icon">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12,6 12,12 16,14"></polyline>
+                            </svg>
+                            <strong>Horário:</strong> <span id="previewHorario"></span>
+                        </div>
+                        <div class="preview-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="item-icon">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg>
+                            <strong>Cidade:</strong> <span id="previewCidade"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seleção de usuário -->
+                <div class="user-selection">
+                    <div class="section-header">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="section-icon">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        <h4>Destinatário</h4>
+                    </div>
+                    <p class="selection-hint">Selecione o usuário que receberá este agendamento</p>
+                    
+                    <div class="user-dropdown-container">
+                        <select id="userSelect" class="user-select">
+                            <option value="">Selecione um usuário...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Mensagem opcional -->
+                <div class="message-section">
+                    <div class="section-header">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="section-icon">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        <h4>Mensagem (opcional)</h4>
+                    </div>
+                    <textarea 
+                        id="shareMessage" 
+                        class="share-message-input" 
+                        placeholder="Adicione uma mensagem para o usuário..."
+                        rows="3"
+                        maxlength="200"></textarea>
+                    <div class="char-counter">
+                        <span id="charCount">0</span>/200 caracteres
+                    </div>
+                </div>
+
+                <!-- Botões de ação -->
+                <div class="share-actions">
+                    <button type="button" class="btn-secondary" onclick="closeShareModal()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn-primary" id="confirmShareBtn" onclick="confirmShare()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                            <polyline points="16,6 12,2 8,6"></polyline>
+                            <line x1="12" y1="2" x2="12" y2="15"></line>
+                        </svg>
+                        Compartilhar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Localização -->
+    <div id="locationModal" class="modal location-modal">
+        <div class="modal-content location-modal-content system-window">
+            <div class="system-window-header">
+                <div class="system-window-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    Localização do Agendamento
+                </div>
+                <div class="system-window-controls">
+                    <button class="system-btn minimize-btn">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </button>
+                    <button class="system-btn maximize-btn">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        </svg>
+                    </button>
+                    <button class="system-btn close-btn" id="closeLocationModal">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="system-window-body">
+                <div class="map-container">
+                    <div id="map" class="custom-map"></div>
+                    <div class="map-overlay">
+                        <div class="map-controls">
+                            <button id="zoomIn" class="map-control-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                            </button>
+                            <button id="zoomOut" class="map-control-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                            </button>
+                            <button id="centerMap" class="map-control-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="coordinates-info">
+                    <div class="coordinates-display">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                        <span><strong>Coordenadas:</strong> <span id="currentCoordinates"></span></span>
+                    </div>
+                    <div class="coordinates-actions">
+                        <button type="button" id="openInMaps" class="btn-action">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                <polyline points="15,3 21,3 21,9"></polyline>
+                                <line x1="10" y1="14" x2="21" y2="3"></line>
+                            </svg>
+                            Abrir no Google Maps
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container de Toasts (será criado dinamicamente) -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="../utils/data-cleaner.js"></script>
+    <script src="../scripts/websocket-client.js"></script>
+    <script src="../scripts/notifications.js"></script>
+    <script src="../scripts/tts.js"></script>
+    <script src="../scripts/main.js"></script>
+    <script src="../scripts/shareModal.js"></script>
+    <script src="../scripts/updater.js"></script>
+</body>
+</html>

@@ -1137,12 +1137,51 @@ function openInGoogleMaps() {
     }
 }
 function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        showToast('Contato copiado para a área de transferência!', 'success');
-    }).catch(err => {
-        console.error('Erro ao copiar:', err);
+    // Verificar se o texto existe
+    if (!text || text.trim() === '') {
+        showToast('Nenhum contato para copiar', 'warning');
+        return;
+    }
+
+    // Tentar usar a API moderna do clipboard
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text.trim()).then(() => {
+            showToast(`Contato ${text.trim()} copiado para a área de transferência!`, 'success');
+        }).catch(err => {
+            console.error('Erro ao copiar com clipboard API:', err);
+            // Fallback para método antigo
+            fallbackCopyToClipboard(text);
+        });
+    } else {
+        // Fallback para navegadores mais antigos
+        fallbackCopyToClipboard(text);
+    }
+}
+
+// Função fallback para copiar texto
+function fallbackCopyToClipboard(text) {
+    try {
+        const textArea = document.createElement('textarea');
+        textArea.value = text.trim();
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        if (successful) {
+            showToast(`Contato ${text.trim()} copiado para a área de transferência!`, 'success');
+        } else {
+            showToast('Erro ao copiar contato', 'error');
+        }
+    } catch (err) {
+        console.error('Erro no fallback de cópia:', err);
         showToast('Erro ao copiar contato', 'error');
-    });
+    }
 }
 
 // Funções globais para os botões dos cards

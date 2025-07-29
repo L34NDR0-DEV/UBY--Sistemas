@@ -2625,19 +2625,11 @@ input:checked + .toggle-slider:before {
     }
 }
 
-/* Contato copiável */
+/* Contato copiável - sem animação hover */
 .copyable-contact {
     cursor: pointer;
     color: #007bff;
     text-decoration: underline;
-    transition: all 0.2s ease;
-}
-
-.copyable-contact:hover {
-    color: #0056b3;
-    background: rgba(0, 123, 255, 0.1);
-    padding: 2px 4px;
-    border-radius: 4px;
 }
 
 /* Link de coordenadas */

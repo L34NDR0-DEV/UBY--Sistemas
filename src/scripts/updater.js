@@ -358,7 +358,29 @@ document.addEventListener('DOMContentLoaded', () => {
     window.updateManager = new UpdateManager();
     console.log('[UPDATER] UpdateManager criado:', window.updateManager);
     
-    // Adicionar botão de atualização no header se não existir
+    // Verificar automaticamente por atualizações ao inicializar
+    // O botão só será criado se houver uma atualização disponível
+    setTimeout(() => {
+        window.updateManager.checkForUpdatesQuietly();
+    }, 3000); // Aguardar 3 segundos após o carregamento
+});
+
+// Adicionar método para verificação silenciosa
+UpdateManager.prototype.checkForUpdatesQuietly = function() {
+    console.log('[UPDATER] Verificando atualizações silenciosamente...');
+    
+    const ipc = getIpcRenderer();
+    if (!ipc) {
+        console.log('[UPDATER] IPC não disponível para verificação silenciosa');
+        return;
+    }
+
+    // Verificar por atualizações sem mostrar mensagens
+    ipc.send('check-for-updates-quiet');
+};
+
+// Adicionar método para criar botão de atualização
+UpdateManager.prototype.createUpdateButton = function() {
     const headerRight = document.querySelector('.header-right');
     console.log('[UPDATER] Header right encontrado:', headerRight);
     
@@ -366,13 +388,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const updateBtn = document.createElement('button');
         updateBtn.className = 'header-btn update-btn';
         updateBtn.id = 'checkUpdatesBtn';
-        updateBtn.title = 'Verificar Atualizações';
+        updateBtn.title = 'Atualização Disponível - Clique para Atualizar';
         updateBtn.innerHTML = `
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/>
             </svg>
-            <span class="btn-text">Atualizações</span>
+            <span class="btn-text">Nova Atualização!</span>
         `;
+        
+        // Adicionar estilo especial para indicar atualização disponível
+        updateBtn.style.background = 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)';
+        updateBtn.style.animation = 'pulse 2s infinite';
         
         updateBtn.addEventListener('click', () => {
             console.log('[UPDATER] Botão de atualização clicado!');
@@ -384,7 +410,8 @@ document.addEventListener('DOMContentLoaded', () => {
         headerRight.insertBefore(updateBtn, lastBtn);
         
         console.log('[UPDATER] Botão de atualização criado e adicionado ao header');
-    } else {
-        console.log('[UPDATER] Botão já existe ou header não encontrado');
+        
+        // Mostrar notificação de atualização disponível
+        this.showToast('🎉 Nova atualização disponível! Clique no botão vermelho para atualizar.', 'info');
     }
-});
+};

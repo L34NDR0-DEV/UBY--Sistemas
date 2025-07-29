@@ -599,6 +599,12 @@ autoUpdater.on('update-available', (info) => {
   // Enviar para o renderer
   if (mainWindow) {
     mainWindow.webContents.send('update-available', info);
+    // Criar botão de atualização quando houver atualização disponível
+    mainWindow.webContents.executeJavaScript(`
+      if (window.updateManager && typeof window.updateManager.createUpdateButton === 'function') {
+        window.updateManager.createUpdateButton();
+      }
+    `);
   }
 });
 
@@ -645,6 +651,16 @@ ipcMain.on('check-for-updates', () => {
     if (mainWindow) {
       mainWindow.webContents.send('update-not-available', { message: 'Nenhuma atualização disponível no momento' });
     }
+  });
+});
+
+// Handler para verificação silenciosa de atualizações
+ipcMain.on('check-for-updates-quiet', () => {
+  console.log('Verificação silenciosa de atualização solicitada pelo renderer');
+  // Verificar se há releases no GitHub sem mostrar mensagens de erro
+  autoUpdater.checkForUpdates().catch(err => {
+    console.log('Nenhuma atualização disponível (verificação silenciosa):', err.message);
+    // Não enviar mensagem para o renderer em verificação silenciosa
   });
 });
 

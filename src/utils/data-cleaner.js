@@ -228,7 +228,7 @@ class DataCleaner {
                 await window.ipcRenderer.invoke('clearAllNotifications');
             }
 
-            // Limpar dados do localStorage (cache local)
+            // Limpar dados do localStorage (cache local e post-its)
             const dataToRemove = [
                 'agendamentos',
                 'notifications',
@@ -237,7 +237,13 @@ class DataCleaner {
                 'tempData',
                 'draftAgendamentos',
                 'filterSettings',
-                'lastFilter'
+                'lastFilter',
+                'postits',
+                'stickyNotes',
+                'userNotes',
+                'quickNotes',
+                'reminders',
+                'tempNotes'
             ];
 
             // Remover dados do localStorage
@@ -256,7 +262,23 @@ class DataCleaner {
                 window.filteredAgendamentos = [];
             }
 
-            console.log('✅ Limpeza executada com sucesso');
+            // Limpar post-its da interface
+            const postitContainers = document.querySelectorAll('.postit-container, .sticky-notes-container, .notes-container');
+            postitContainers.forEach(container => {
+                if (container) {
+                    container.innerHTML = '';
+                }
+            });
+
+            // Limpar elementos de post-its individuais
+            const postitElements = document.querySelectorAll('.postit, .sticky-note, .note-item, .agendamento-card.postit-style');
+            postitElements.forEach(element => {
+                if (element) {
+                    element.remove();
+                }
+            });
+
+            console.log('✅ Limpeza executada com sucesso - incluindo post-its');
             return { success: true };
 
         } catch (error) {

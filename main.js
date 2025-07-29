@@ -485,6 +485,40 @@ ipcMain.handle('removeNotification', async (event, notificationId) => {
   return { success: true };
 });
 
+// Handler para limpar todos os agendamentos (lixeira)
+ipcMain.handle('clearAllAgendamentos', async () => {
+  try {
+    const agendamentos = store.get('agendamentos', []);
+    const count = agendamentos.length;
+    
+    // Limpar todos os agendamentos
+    store.set('agendamentos', []);
+    
+    console.log(`✅ Lixeira: ${count} agendamentos removidos do electron-store`);
+    return { success: true, deletedCount: count };
+  } catch (error) {
+    console.error('❌ Erro ao limpar agendamentos:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Handler para limpar todas as notificações (lixeira)
+ipcMain.handle('clearAllNotifications', async () => {
+  try {
+    const notifications = store.get('notifications', []);
+    const count = notifications.length;
+    
+    // Limpar todas as notificações
+    store.set('notifications', []);
+    
+    console.log(`✅ Lixeira: ${count} notificações removidas do electron-store`);
+    return { success: true, deletedCount: count };
+  } catch (error) {
+    console.error('❌ Erro ao limpar notificações:', error);
+    return { success: false, error: error.message };
+  }
+});
+
 // Handler para buscar usuários (atualizado para usar users.json)
 ipcMain.handle('getUsers', async () => {
   return loadUsers().users || [];

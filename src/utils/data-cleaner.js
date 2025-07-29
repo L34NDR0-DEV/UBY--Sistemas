@@ -219,7 +219,16 @@ class DataCleaner {
      */
     async executeCleanup() {
         try {
-            // Limpar dados principais
+            // Limpar dados principais via IPC (electron-store)
+            if (window.ipcRenderer) {
+                // Limpar agendamentos do electron-store
+                await window.ipcRenderer.invoke('clearAllAgendamentos');
+                
+                // Limpar notificações do electron-store
+                await window.ipcRenderer.invoke('clearAllNotifications');
+            }
+
+            // Limpar dados do localStorage (cache local)
             const dataToRemove = [
                 'agendamentos',
                 'notifications',
@@ -423,6 +432,54 @@ class DataCleaner {
             }
         } catch (error) {
             console.error('❌ Erro na limpeza rápida:', error);
+            return { success: false, error: error.message };
+        } finally {
+            this.isProcessing = false;
+        }
+    }
+
+    /**
+     * Limpeza sem confirmação (função principal da lixeira)
+     */
+    async clearAllDataNoConfirm() {
+        if (this.isProcessing) {
+            return { success: false, error: 'Operação já em andamento' };
+        }
+
+        this.isProcessing = true;
+
+        try {
+            // Criar backup antes da limpeza
+            if (this.backupEnabled) {
+                this.createBackup();
+            }
+
+            // Obter contagem antes da limpeza
+            const agendamentos = JSON.parse(localStorage.getItem('agendamentos') || '[]');
+            const deletedCount = agendamentos.length;
+
+            // Executar limpeza sem confirmação
+            const result = await this.executeCleanup();
+            
+            if (result.success) {
+                // Mostrar notificação de sucesso
+                this.showSuccessNotification(deletedCount);
+                
+                // Atualizar interface
+                await this.updateInterface();
+                
+                return { 
+                    success: true, 
+                    deletedCount, 
+                    message: `${deletedCount} agendamentos deletados permanentemente` 
+                };
+            } else {
+                throw new Error(result.error);
+            }
+
+        } catch (error) {
+            console.error('❌ Erro na lixeira:', error);
+            this.showErrorNotification(error.message);
             return { success: false, error: error.message };
         } finally {
             this.isProcessing = false;

@@ -1206,25 +1206,80 @@ input:checked + .toggle-slider:before {
     color: white;
 }
 
-/* Botão de limpar dados */
-.clear-data-btn {
-    background: #dc3545;
-    border: 2px solid #dc3545;
+/* Botão de lixeira moderno */
+
+
+
+
+/* Nova Lixeira */
+.trash-btn {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    border: 2px solid #e74c3c;
     color: white;
-    padding: 10px;
+    padding: 10px 16px;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    position: relative;
+    overflow: hidden;
+    min-width: 44px;
+    min-height: 44px;
+    box-shadow: 0 2px 8px rgba(231, 76, 60, 0.2);
+    transition: all 0.2s ease;
 }
 
-.clear-data-btn:hover {
-    background: #c82333;
-    border-color: #c82333;
+.trash-btn:hover {
+    background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+    border-color: #c0392b;
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+.trash-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(231, 76, 60, 0.3);
+}
+
+.trash-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.3);
+}
+
+.trash-btn.processing {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+    border-color: #6c757d;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.trash-btn.processing::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsividade da lixeira */
+@media (max-width: 768px) {
+    .trash-btn {
+        padding: 8px 12px;
+        font-size: 13px;
+        min-width: 40px;
+        min-height: 40px;
+    }
 }
 
 /* Filtros avançados */
@@ -1421,6 +1476,8 @@ input:checked + .toggle-slider:before {
     z-index: 1 !important;
     background: transparent !important;
     padding: 0 20px;
+    /* Garantir que os cards não se estiquem */
+    justify-items: center;
 }
 
 .empty-state {
@@ -1778,6 +1835,7 @@ input:checked + .toggle-slider:before {
         grid-template-columns: repeat(auto-fit, minmax(280px, 320px));
         gap: 20px;
         padding: 0 10px;
+        justify-items: center;
     }
     
     .tabs {
@@ -1842,7 +1900,8 @@ input:checked + .toggle-slider:before {
     background: linear-gradient(135deg, #fff9c4 0%, #fff176 100%);
     height: 350px;
     width: 100%;
-    max-width: none;
+    max-width: 320px; /* Limitar largura máxima para evitar esticamento */
+    min-width: 280px; /* Manter largura mínima */
     padding: 18px 15px 15px 15px;
     display: flex;
     flex-direction: column;
@@ -1853,6 +1912,20 @@ input:checked + .toggle-slider:before {
 
 .agendamento-card.postit-style:nth-child(even) {
     transform: none; /* Removido rotate */
+}
+
+/* Garantir que agendamentos únicos não se estiquem */
+.agendamentos-container:has(.agendamento-card:only-child) .agendamento-card.postit-style {
+    justify-self: center;
+    max-width: 320px;
+    width: 100%;
+}
+
+/* Fallback para navegadores que não suportam :has() */
+.agendamentos-container .agendamento-card.postit-style:only-child {
+    justify-self: center;
+    max-width: 320px;
+    width: 100%;
 }
 
 .agendamento-card.postit-style:hover {
@@ -1900,7 +1973,7 @@ input:checked + .toggle-slider:before {
 
 /* Nome do cliente em destaque */
 .agendamento-card.postit-style .card-title {
-    font-size: 18px !important;
+    font-size: 22px !important;
     font-weight: 700 !important;
     color: #2c3e50 !important;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
@@ -1915,7 +1988,7 @@ input:checked + .toggle-slider:before {
 
 /* Horário e data em destaque secundário */
 .agendamento-card.postit-style .card-time {
-    font-size: 14px !important;
+    font-size: 16px !important;
     font-weight: 600 !important;
     color: #e74c3c !important;
     text-align: center;
@@ -1952,7 +2025,7 @@ input:checked + .toggle-slider:before {
 }
 
 .agendamento-card.postit-style .info-item {
-    font-size: 11px !important;
+    font-size: 13px !important;
     margin-bottom: 6px !important;
     padding: 3px 0;
     border-bottom: 1px dotted rgba(0, 0, 0, 0.1);
@@ -1983,8 +2056,8 @@ input:checked + .toggle-slider:before {
 }
 
 .agendamento-card.postit-style .action-btn {
-    font-size: 8px !important;
-    padding: 3px 6px !important;
+    font-size: 10px !important;
+    padding: 4px 8px !important;
     border-radius: 10px !important;
     border: 1px solid rgba(0, 0, 0, 0.1) !important;
     background: rgba(255, 255, 255, 0.8) !important;
@@ -1994,8 +2067,8 @@ input:checked + .toggle-slider:before {
     letter-spacing: 0.3px;
     transition: all 0.2s ease;
     flex: 0 1 auto !important;
-    min-width: 40px !important;
-    max-width: 80px !important;
+    min-width: 45px !important;
+    max-width: 85px !important;
     text-align: center !important;
     white-space: nowrap !important;
     overflow: hidden !important;

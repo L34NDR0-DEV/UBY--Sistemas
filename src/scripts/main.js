@@ -1265,29 +1265,55 @@ function setupSearchEventListeners() {
         });
     }
 
-    if (clearDataBtn) {
-        clearDataBtn.addEventListener('click', async () => {
+
+
+    // Nova Lixeira - Apagar todos os agendamentos
+    const trashBtn = document.getElementById('trashBtn');
+    if (trashBtn) {
+        trashBtn.addEventListener('click', async () => {
             try {
-                // Executar limpeza direta sem confirmação
-                const cleaner = window.dataCleaner;
-                const result = await cleaner.clearAllData();
-                
-                if (result && result.success) {
-                    showToast(`🗑️ Lixeira: ${result.deletedCount} agendamentos deletados permanentemente`, 'success');
-                    
-                    // Recarregar dados
-                    await loadAgendamentos();
-                    
-                    // Atualizar estatísticas se a função existir
-                    if (typeof updateDataStats === 'function') {
-                        updateDataStats();
-                    }
-                } else {
-                    throw new Error(result?.error || 'Erro desconhecido ao limpar dados');
+                // Verificar se há agendamentos para deletar
+                if (!agendamentos || agendamentos.length === 0) {
+                    showToast('Nenhum agendamento encontrado para deletar', 'info');
+                    return;
                 }
+
+                // Confirmação do usuário
+                const confirmacao = confirm(`Tem certeza que deseja apagar TODOS os ${agendamentos.length} agendamentos?\n\nEsta ação não pode ser desfeita!`);
+                if (!confirmacao) {
+                    return;
+                }
+
+                // Adicionar estado de processamento
+                trashBtn.classList.add('processing');
+                trashBtn.disabled = true;
+
+                // Apagar todos os agendamentos
+                agendamentos = [];
+                filteredAgendamentos = [];
+                
+                // Limpar localStorage
+                localStorage.removeItem('agendamentos');
+                
+                // Atualizar interface
+                await loadAgendamentos();
+                
+                // Mostrar mensagem de sucesso
+                showToast(`Todos os ${agendamentos.length} agendamentos foram apagados com sucesso!`, 'success');
+                
+                // Adicionar efeito visual de sucesso
+                trashBtn.style.background = 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)';
+                setTimeout(() => {
+                    trashBtn.style.background = '';
+                }, 2000);
+
             } catch (error) {
-                console.error('Erro ao executar lixeira:', error);
-                showToast(`Erro ao executar lixeira: ${error.message}`, 'error');
+                console.error('Erro ao apagar agendamentos:', error);
+                showToast(`Erro ao apagar agendamentos: ${error.message}`, 'error');
+            } finally {
+                // Remover estado de processamento
+                trashBtn.classList.remove('processing');
+                trashBtn.disabled = false;
             }
         });
     }
@@ -2312,3 +2338,81 @@ document.addEventListener('DOMContentLoaded', function() {
         initializeWebSocket();
     }, 2000);
 });
+
+// Funções extras para o sistema da lixeira
+function showTrashStats() {
+    const cleaner = window.dataCleaner;
+    if (!cleaner) {
+        showToast('❌ Sistema de lixeira não disponível', 'error');
+        return;
+    }
+
+    const stats = cleaner.getDataStats();
+    if (!stats) {
+        showToast('❌ Erro ao obter estatísticas', 'error');
+        return;
+    }
+
+    const message = `
+📊 Estatísticas da Lixeira:
+
+🗂️ Agendamentos: ${stats.totalAgendamentos}
+📱 Notificações: ${stats.totalNotifications}
+📅 Antigos (30+ dias): ${stats.agendamentosAntigos}
+✅ Concluídos: ${stats.agendamentosConcluidos}
+❌ Cancelados: ${stats.agendamentosCancelados}
+💾 Tamanho: ${Math.round(stats.storageSize / 1024)} KB
+🔄 Último backup: ${stats.lastBackup ? new Date(parseInt(stats.lastBackup)).toLocaleString('pt-BR') : 'Nunca'}
+    `.trim();
+
+    showToast(message, 'info');
+}
+
+function configureTrashSystem() {
+    const cleaner = window.dataCleaner;
+    if (!cleaner) {
+        showToast('❌ Sistema de lixeira não disponível', 'error');
+        return;
+    }
+
+    const enableBackup = confirm('Deseja habilitar backup automático antes da limpeza?');
+    const requireConfirmation = confirm('Deseja que a lixeira peça confirmação antes de deletar?');
+    
+    cleaner.configure({
+        backupEnabled: enableBackup,
+        confirmationRequired: requireConfirmation,
+        maxBackups: 5
+    });
+
+    showToast('⚙️ Configurações da lixeira atualizadas', 'success');
+}
+
+function restoreFromBackup() {
+    const cleaner = window.dataCleaner;
+    if (!cleaner) {
+        showToast('❌ Sistema de lixeira não disponível', 'error');
+        return;
+    }
+
+    const confirmed = confirm('Deseja restaurar os dados do último backup?\n\nEsta ação irá substituir os dados atuais.');
+    if (!confirmed) {
+        return;
+    }
+
+    const result = cleaner.restoreFromBackup();
+    if (result.success) {
+        showToast('✅ Dados restaurados com sucesso', 'success');
+    } else {
+        showToast(`❌ Erro ao restaurar: ${result.error}`, 'error');
+    }
+}
+
+// Adicionar funções globais para acesso via console
+window.showTrashStats = showTrashStats;
+window.configureTrashSystem = configureTrashSystem;
+window.restoreFromBackup = restoreFromBackup;
+
+console.log('🗑️ Funções da lixeira carregadas. Use:');
+console.log('- showTrashStats() - Ver estatísticas');
+console.log('- configureTrashSystem() - Configurar lixeira');
+console.log('- restoreFromBackup() - Restaurar do backup');

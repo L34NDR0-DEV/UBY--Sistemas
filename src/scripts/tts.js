@@ -300,11 +300,22 @@ class ReminderSystem {
                         type: 'reminder',
                         title: 'Lembrete - 1 hora',
                         message: `Agendamento com ${agendamento.nomeCliente} às ${agendamento.horario}`,
-                        appointmentData: agendamento,
+                        data: {
+                            cliente: agendamento.nomeCliente,
+                            data: agendamento.data,
+                            hora: agendamento.horario,
+                            telefone: agendamento.numeroContato
+                        },
                         actions: [
                             {
+                                id: 'view',
                                 label: 'Ver Detalhes',
-                                action: () => window.showAgendamentoDetails && window.showAgendamentoDetails(agendamento.id)
+                                style: 'primary',
+                                callback: (data) => {
+                                    if (window.showAgendamentoDetails) {
+                                        window.showAgendamentoDetails(agendamento.id);
+                                    }
+                                }
                             }
                         ]
                     });
@@ -329,11 +340,22 @@ class ReminderSystem {
                         type: 'reminder',
                         title: 'Lembrete - 30 minutos',
                         message: `Agendamento com ${agendamento.nomeCliente} às ${agendamento.horario}`,
-                        appointmentData: agendamento,
+                        data: {
+                            cliente: agendamento.nomeCliente,
+                            data: agendamento.data,
+                            hora: agendamento.horario,
+                            telefone: agendamento.numeroContato
+                        },
                         actions: [
                             {
+                                id: 'view',
                                 label: 'Ver Detalhes',
-                                action: () => window.showAgendamentoDetails && window.showAgendamentoDetails(agendamento.id)
+                                style: 'primary',
+                                callback: (data) => {
+                                    if (window.showAgendamentoDetails) {
+                                        window.showAgendamentoDetails(agendamento.id);
+                                    }
+                                }
                             }
                         ]
                     });
@@ -358,15 +380,32 @@ class ReminderSystem {
                         type: 'warning',
                         title: 'Lembrete - 15 minutos',
                         message: `Agendamento com ${agendamento.nomeCliente} às ${agendamento.horario}`,
-                        appointmentData: agendamento,
+                        data: {
+                            cliente: agendamento.nomeCliente,
+                            data: agendamento.data,
+                            hora: agendamento.horario,
+                            telefone: agendamento.numeroContato
+                        },
                         actions: [
                             {
+                                id: 'view',
                                 label: 'Ver Detalhes',
-                                action: () => window.showAgendamentoDetails && window.showAgendamentoDetails(agendamento.id)
+                                style: 'primary',
+                                callback: (data) => {
+                                    if (window.showAgendamentoDetails) {
+                                        window.showAgendamentoDetails(agendamento.id);
+                                    }
+                                }
                             },
                             {
+                                id: 'complete',
                                 label: 'Marcar como Concluído',
-                                action: () => window.markAsCompleted && window.markAsCompleted(agendamento.id)
+                                style: 'secondary',
+                                callback: (data) => {
+                                    if (window.markAsCompleted) {
+                                        window.markAsCompleted(agendamento.id);
+                                    }
+                                }
                             }
                         ]
                     });
@@ -391,15 +430,32 @@ class ReminderSystem {
                         type: 'urgent',
                         title: 'Lembrete - 5 minutos',
                         message: `Agendamento com ${agendamento.nomeCliente} às ${agendamento.horario}`,
-                        appointmentData: agendamento,
+                        data: {
+                            cliente: agendamento.nomeCliente,
+                            data: agendamento.data,
+                            hora: agendamento.horario,
+                            telefone: agendamento.numeroContato
+                        },
                         actions: [
                             {
+                                id: 'view',
                                 label: 'Ver Detalhes',
-                                action: () => window.showAgendamentoDetails && window.showAgendamentoDetails(agendamento.id)
+                                style: 'primary',
+                                callback: (data) => {
+                                    if (window.showAgendamentoDetails) {
+                                        window.showAgendamentoDetails(agendamento.id);
+                                    }
+                                }
                             },
                             {
+                                id: 'complete',
                                 label: 'Marcar como Concluído',
-                                action: () => window.markAsCompleted && window.markAsCompleted(agendamento.id)
+                                style: 'secondary',
+                                callback: (data) => {
+                                    if (window.markAsCompleted) {
+                                        window.markAsCompleted(agendamento.id);
+                                    }
+                                }
                             }
                         ]
                     });
@@ -442,20 +498,44 @@ class ReminderSystem {
                             type: 'late',
                             title: `ATRASO ${lateInfo.count}/3`,
                             message: `${agendamento.nomeCliente} - ${minutesLate} min de atraso`,
-                            appointmentData: agendamento,
+                            data: {
+                                cliente: agendamento.nomeCliente,
+                                data: agendamento.data,
+                                hora: agendamento.horario,
+                                telefone: agendamento.numeroContato,
+                                delay: minutesLate
+                            },
                             persistent: true, // Notificações de atraso são persistentes
                             actions: [
                                 {
+                                    id: 'view',
                                     label: 'Ver Detalhes',
-                                    action: () => window.showAgendamentoDetails && window.showAgendamentoDetails(agendamento.id)
+                                    style: 'primary',
+                                    callback: (data) => {
+                                        if (window.showAgendamentoDetails) {
+                                            window.showAgendamentoDetails(agendamento.id);
+                                        }
+                                    }
                                 },
                                 {
+                                    id: 'complete',
                                     label: 'Marcar como Concluído',
-                                    action: () => window.markAsCompleted && window.markAsCompleted(agendamento.id)
+                                    style: 'secondary',
+                                    callback: (data) => {
+                                        if (window.markAsCompleted) {
+                                            window.markAsCompleted(agendamento.id);
+                                        }
+                                    }
                                 },
                                 {
+                                    id: 'cancel',
                                     label: 'Cancelar',
-                                    action: () => window.cancelAppointment && window.cancelAppointment(agendamento.id)
+                                    style: 'secondary',
+                                    callback: (data) => {
+                                        if (window.cancelAppointment) {
+                                            window.cancelAppointment(agendamento.id);
+                                        }
+                                    }
                                 }
                             ]
                         });

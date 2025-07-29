@@ -54,7 +54,6 @@
 
 .notification-card.late {
     border-left: 4px solid #dc2626;
-    animation: pulse-red 2s infinite;
 }
 
 .notification-card.success {

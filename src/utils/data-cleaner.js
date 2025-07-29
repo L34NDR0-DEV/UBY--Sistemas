@@ -1,599 +1,459 @@
 /**
- * Utilitário para limpeza de dados de agendamento
- * Fornece funcionalidades para limpar dados antigos, duplicados e inválidos
+ * Sistema de Lixeira Moderno e Robusto
+ * Gerencia limpeza de dados com confirmação, backup e recuperação
  */
 
 class DataCleaner {
     constructor() {
+        this.isProcessing = false;
+        this.backupEnabled = true;
+        this.confirmationRequired = true;
+        this.maxBackups = 5;
+        
+        // Configurações de limpeza
         this.cleanupRules = {
-            // Dias para considerar agendamentos como antigos
             oldAppointmentDays: 365,
-            // Dias para considerar notificações como antigas
             oldNotificationDays: 90,
-            // Máximo de agendamentos por usuário
             maxAppointmentsPerUser: 1000,
-            // Máximo de notificações por usuário
-            maxNotificationsPerUser: 100
+            maxNotificationsPerUser: 100,
+            autoCleanupInterval: 24 * 60 * 60 * 1000 // 24 horas
         };
+        
+        // Inicializar sistema
+        this.init();
     }
 
     /**
-     * Limpar todos os dados de agendamento (Lixeira - sem confirmação)
+     * Inicializar o sistema de lixeira
      */
-    clearAllData() {
+    init() {
+        console.log('Sistema de Lixeira inicializado');
+        
+        // Verificar se há backup recente
+        this.checkBackupStatus();
+        
+        // Configurar limpeza automática
+        this.setupAutoCleanup();
+        
+        // Registrar métodos globais
+        window.dataCleaner = this;
+        window.trashSystem = this;
+    }
+
+    /**
+     * Verificar status do backup
+     */
+    checkBackupStatus() {
+        const lastBackup = localStorage.getItem('lastBackup');
+        const now = Date.now();
+        
+        if (!lastBackup || (now - parseInt(lastBackup)) > this.cleanupRules.autoCleanupInterval) {
+            console.log('Criando backup automático...');
+            this.createBackup();
+        }
+    }
+
+    /**
+     * Configurar limpeza automática
+     */
+    setupAutoCleanup() {
+        // Limpeza automática a cada 24 horas
+        setInterval(() => {
+            this.performAutoCleanup();
+        }, this.cleanupRules.autoCleanupInterval);
+    }
+
+    /**
+     * Criar backup dos dados
+     */
+    createBackup() {
         try {
-            // Obter contagem antes da limpeza
-            const agendamentos = JSON.parse(localStorage.getItem('agendamentos') || '[]');
-            const deletedCount = agendamentos.length;
+            const backupData = {
+                timestamp: Date.now(),
+                agendamentos: JSON.parse(localStorage.getItem('agendamentos') || '[]'),
+                notifications: JSON.parse(localStorage.getItem('notifications') || '[]'),
+                settings: {
+                    theme: localStorage.getItem('theme') || 'light',
+                    soundEnabled: localStorage.getItem('soundEnabled') || 'true',
+                    volume: localStorage.getItem('volume') || '0.5'
+                }
+            };
 
-            // Limpar TODOS os dados de agendamento
-            localStorage.removeItem('agendamentos');
-            sessionStorage.removeItem('agendamentos');
+            // Salvar backup
+            localStorage.setItem('backupData', JSON.stringify(backupData));
+            localStorage.setItem('lastBackup', Date.now().toString());
 
-            // Limpar notificações
-            localStorage.removeItem('notifications');
-            sessionStorage.removeItem('notifications');
+            // Manter apenas os últimos 5 backups
+            this.cleanOldBackups();
 
-            // Limpar cache de busca
-            localStorage.removeItem('searchCache');
-            localStorage.removeItem('searchHistory');
+            console.log('Backup criado com sucesso');
+            return true;
+        } catch (error) {
+            console.error('Erro ao criar backup:', error);
+            return false;
+        }
+    }
 
-            // Limpar dados temporários
-            localStorage.removeItem('tempData');
-            localStorage.removeItem('draftAgendamentos');
+    /**
+     * Limpar backups antigos
+     */
+    cleanOldBackups() {
+        const backups = [];
+        
+        // Coletar todos os backups
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('backup_')) {
+                try {
+                    const backup = JSON.parse(localStorage.getItem(key));
+                    backups.push({ key, timestamp: backup.timestamp });
+                } catch (e) {
+                    // Backup corrompido, remover
+                    localStorage.removeItem(key);
+                }
+            }
+        }
 
-            // Limpar configurações de filtros
-            localStorage.removeItem('filterSettings');
-            localStorage.removeItem('lastFilter');
+        // Ordenar por timestamp e manter apenas os mais recentes
+        backups.sort((a, b) => b.timestamp - a.timestamp);
+        
+        for (let i = this.maxBackups; i < backups.length; i++) {
+            localStorage.removeItem(backups[i].key);
+        }
+    }
 
-            // Limpar dados de backup
-            localStorage.removeItem('backupData');
-            localStorage.removeItem('lastBackup');
-
-            console.log(`[SUCCESS] 🗑️ Lixeira: ${deletedCount} agendamentos deletados permanentemente`);
-            
-            // Mostrar notificação de sucesso
-            if (window.showToast) {
-                window.showToast(`🗑️ Lixeira: ${deletedCount} agendamentos deletados permanentemente`, 'success');
+    /**
+     * Restaurar dados do backup
+     */
+    restoreFromBackup() {
+        try {
+            const backupData = localStorage.getItem('backupData');
+            if (!backupData) {
+                throw new Error('Nenhum backup encontrado');
             }
 
-            // Atualizar interface imediatamente
+            const backup = JSON.parse(backupData);
+            
+            // Restaurar dados
+            localStorage.setItem('agendamentos', JSON.stringify(backup.agendamentos));
+            localStorage.setItem('notifications', JSON.stringify(backup.notifications));
+            
+            // Restaurar configurações
+            Object.entries(backup.settings).forEach(([key, value]) => {
+                localStorage.setItem(key, value);
+            });
+
+            console.log('✅ Dados restaurados do backup');
+            
+            // Atualizar interface
             if (window.loadAgendamentos) {
                 window.loadAgendamentos();
             }
 
-            // Limpar também a interface visual
+            return { success: true, message: 'Dados restaurados com sucesso' };
+        } catch (error) {
+            console.error('❌ Erro ao restaurar backup:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Limpeza principal da lixeira com confirmação
+     */
+    async clearAllData() {
+        if (this.isProcessing) {
+            return { success: false, error: 'Operação já em andamento' };
+        }
+
+        this.isProcessing = true;
+
+        try {
+            // Criar backup antes da limpeza
+            if (this.backupEnabled) {
+                this.createBackup();
+            }
+
+            // Obter contagem antes da limpeza
+            const agendamentos = JSON.parse(localStorage.getItem('agendamentos') || '[]');
+            const deletedCount = agendamentos.length;
+
+            // Confirmar ação se necessário
+            if (this.confirmationRequired && deletedCount > 0) {
+                const confirmed = await this.showConfirmationDialog(deletedCount);
+                if (!confirmed) {
+                    this.isProcessing = false;
+                    return { success: false, error: 'Operação cancelada pelo usuário' };
+                }
+            }
+
+            // Executar limpeza
+            const result = await this.executeCleanup();
+            
+            if (result.success) {
+                // Mostrar notificação de sucesso
+                this.showSuccessNotification(deletedCount);
+                
+                // Atualizar interface
+                await this.updateInterface();
+                
+                return { 
+                    success: true, 
+                    deletedCount, 
+                    message: `${deletedCount} agendamentos deletados permanentemente` 
+                };
+            } else {
+                throw new Error(result.error);
+            }
+
+        } catch (error) {
+            console.error('❌ Erro na lixeira:', error);
+            this.showErrorNotification(error.message);
+            return { success: false, error: error.message };
+        } finally {
+            this.isProcessing = false;
+        }
+    }
+
+    /**
+     * Executar limpeza dos dados
+     */
+    async executeCleanup() {
+        try {
+            // Limpar dados principais
+            const dataToRemove = [
+                'agendamentos',
+                'notifications',
+                'searchCache',
+                'searchHistory',
+                'tempData',
+                'draftAgendamentos',
+                'filterSettings',
+                'lastFilter'
+            ];
+
+            // Remover dados do localStorage
+            dataToRemove.forEach(key => {
+                localStorage.removeItem(key);
+                sessionStorage.removeItem(key);
+            });
+
+            // Limpar dados da interface
             if (window.agendamentos) {
                 window.agendamentos = [];
             }
 
-            return { success: true, deletedCount, message: `${deletedCount} agendamentos deletados permanentemente` };
+            // Limpar filtros ativos
+            if (window.filteredAgendamentos) {
+                window.filteredAgendamentos = [];
+            }
+
+            console.log('✅ Limpeza executada com sucesso');
+            return { success: true };
+
         } catch (error) {
-            console.error('❌ Erro ao executar lixeira:', error);
+            console.error('❌ Erro durante limpeza:', error);
             return { success: false, error: error.message };
         }
     }
 
     /**
-     * Limpar todos os dados sem confirmação (para lixeira automática)
+     * Mostrar diálogo de confirmação
      */
-    clearAllDataNoConfirm() {
-        try {
-            // Obter contagem antes da limpeza
-            const agendamentos = JSON.parse(localStorage.getItem('agendamentos') || '[]');
-            const deletedCount = agendamentos.length;
-
-            // Limpar agendamentos
-            localStorage.removeItem('agendamentos');
-            sessionStorage.removeItem('agendamentos');
-
-            // Limpar notificações
-            localStorage.removeItem('notifications');
-            sessionStorage.removeItem('notifications');
-
-            // Limpar cache de busca
-            localStorage.removeItem('searchCache');
-            localStorage.removeItem('searchHistory');
-
-            // Limpar dados temporários
-            localStorage.removeItem('tempData');
-            localStorage.removeItem('draftAgendamentos');
-
-            console.log(`[SUCCESS] Lixeira automática: ${deletedCount} agendamentos removidos`);
+    async showConfirmationDialog(count) {
+        return new Promise((resolve) => {
+            const message = `Tem certeza que deseja deletar ${count} agendamento${count !== 1 ? 's' : ''} permanentemente?\n\nEsta ação não pode ser desfeita.`;
             
-            // Mostrar notificação de sucesso sem modal
-            if (window.showToast) {
-                window.showToast(`🗑️ Lixeira: ${deletedCount} agendamentos removidos automaticamente`, 'success');
-            }
+            const confirmed = confirm(message);
+            resolve(confirmed);
+        });
+    }
 
-            // Atualizar interface se disponível
+    /**
+     * Mostrar notificação de sucesso
+     */
+    showSuccessNotification(count) {
+        if (window.showToast) {
+            window.showToast(
+                `🗑️ Lixeira: ${count} agendamento${count !== 1 ? 's' : ''} deletado${count !== 1 ? 's' : ''} permanentemente`, 
+                'success'
+            );
+        }
+    }
+
+    /**
+     * Mostrar notificação de erro
+     */
+    showErrorNotification(message) {
+        if (window.showToast) {
+            window.showToast(`❌ Erro na lixeira: ${message}`, 'error');
+        }
+    }
+
+    /**
+     * Atualizar interface após limpeza
+     */
+    async updateInterface() {
+        try {
+            // Recarregar agendamentos
             if (window.loadAgendamentos) {
-                window.loadAgendamentos();
+                await window.loadAgendamentos();
             }
 
-            return { success: true, deletedCount, message: `${deletedCount} agendamentos removidos pela lixeira` };
+            // Limpar campos de busca
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.value = '';
+            }
+
+            // Resetar filtros
+            if (window.clearAdvancedFilters) {
+                window.clearAdvancedFilters();
+            }
+
+            // Atualizar estatísticas
+            if (typeof updateDataStats === 'function') {
+                updateDataStats();
+            }
+
+            console.log('✅ Interface atualizada');
+        } catch (error) {
+            console.error('❌ Erro ao atualizar interface:', error);
+        }
+    }
+
+    /**
+     * Limpeza automática (sem confirmação)
+     */
+    async performAutoCleanup() {
+        try {
+            console.log('🔄 Executando limpeza automática...');
+            
+            // Criar backup
+            this.createBackup();
+            
+            // Limpar dados antigos
+            const result = await this.executeCleanup();
+            
+            if (result.success) {
+                console.log('✅ Limpeza automática concluída');
+                
+                // Notificação discreta
+                if (window.showToast) {
+                    window.showToast('🗑️ Limpeza automática executada', 'info');
+                }
+            }
         } catch (error) {
             console.error('❌ Erro na limpeza automática:', error);
-            return { success: false, error: error.message };
         }
     }
 
     /**
-     * Limpar agendamentos antigos
-     */
-    clearOldAppointments(daysOld = null) {
-        try {
-            const days = daysOld || this.cleanupRules.oldAppointmentDays;
-            const cutoffDate = new Date();
-            cutoffDate.setDate(cutoffDate.getDate() - days);
-
-            const agendamentos = JSON.parse(localStorage.getItem('agendamentos') || '[]');
-            const initialCount = agendamentos.length;
-
-            // Filtrar agendamentos antigos
-            const filteredAgendamentos = agendamentos.filter(agendamento => {
-                const agendamentoDate = new Date(agendamento.data);
-                return agendamentoDate >= cutoffDate;
-            });
-
-            const removedCount = initialCount - filteredAgendamentos.length;
-
-            if (removedCount > 0) {
-                localStorage.setItem('agendamentos', JSON.stringify(filteredAgendamentos));
-                
-                console.log(`[SUCCESS] ${removedCount} agendamentos antigos removidos`);
-                
-                if (window.showNotification) {
-                    window.showNotification({
-                        type: 'info',
-                        title: 'Limpeza Concluída',
-                        message: `${removedCount} agendamentos antigos (${days}+ dias) foram removidos`,
-                        duration: 4000
-                    });
-                }
-
-                // Atualizar interface
-                if (window.loadAgendamentos) {
-                    window.loadAgendamentos();
-                }
-            } else {
-                if (window.showNotification) {
-                    window.showNotification({
-                        type: 'info',
-                        title: 'Nenhum Dado Antigo',
-                        message: 'Não foram encontrados agendamentos antigos para remover',
-                        duration: 3000
-                    });
-                }
-            }
-
-            return { success: true, deletedCount: removedCount, message: `${removedCount} agendamentos removidos` };
-        } catch (error) {
-            console.error('❌ Erro ao limpar agendamentos antigos:', error);
-            return { success: false, error: error.message };
-        }
-    }
-
-    /**
-     * Limpar notificações antigas
-     */
-    clearOldNotifications(daysOld = null) {
-        try {
-            const days = daysOld || this.cleanupRules.oldNotificationDays;
-            const cutoffDate = new Date();
-            cutoffDate.setDate(cutoffDate.getDate() - days);
-
-            const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
-            const initialCount = notifications.length;
-
-            // Filtrar notificações antigas
-            const filteredNotifications = notifications.filter(notification => {
-                const notificationDate = new Date(notification.createdAt);
-                return notificationDate >= cutoffDate;
-            });
-
-            const removedCount = initialCount - filteredNotifications.length;
-
-            if (removedCount > 0) {
-                localStorage.setItem('notifications', JSON.stringify(filteredNotifications));
-                
-                console.log(`[SUCCESS] ${removedCount} notificações antigas removidas`);
-                
-                if (window.showNotification) {
-                    window.showNotification({
-                        type: 'info',
-                        title: 'Notificações Limpas',
-                        message: `${removedCount} notificações antigas foram removidas`,
-                        duration: 3000
-                    });
-                }
-            }
-
-            return { success: true, removedCount, message: `${removedCount} notificações removidas` };
-        } catch (error) {
-            console.error('❌ Erro ao limpar notificações antigas:', error);
-            return { success: false, error: error.message };
-        }
-    }
-
-    /**
-     * Limpar agendamentos concluídos
-     */
-    clearCompletedAppointments() {
-        try {
-            const agendamentos = JSON.parse(localStorage.getItem('agendamentos') || '[]');
-            const initialCount = agendamentos.length;
-
-            // Filtrar agendamentos concluídos
-            const filteredAgendamentos = agendamentos.filter(agendamento => {
-                return agendamento.status !== 'concluido' && agendamento.status !== 'Concluído';
-            });
-
-            const removedCount = initialCount - filteredAgendamentos.length;
-
-            if (removedCount > 0) {
-                localStorage.setItem('agendamentos', JSON.stringify(filteredAgendamentos));
-                
-                console.log(`[SUCCESS] ${removedCount} agendamentos concluídos removidos`);
-                
-                if (window.showNotification) {
-                    window.showNotification({
-                        type: 'success',
-                        title: 'Agendamentos Concluídos Removidos',
-                        message: `${removedCount} agendamentos concluídos foram removidos`,
-                        duration: 4000
-                    });
-                }
-
-                // Atualizar interface
-                if (window.loadAgendamentos) {
-                    window.loadAgendamentos();
-                }
-            } else {
-                if (window.showNotification) {
-                    window.showNotification({
-                        type: 'info',
-                        title: 'Nenhum Agendamento Concluído',
-                        message: 'Não foram encontrados agendamentos concluídos para remover',
-                        duration: 3000
-                    });
-                }
-            }
-
-            return { success: true, deletedCount: removedCount, message: `${removedCount} agendamentos concluídos removidos` };
-        } catch (error) {
-            console.error('❌ Erro ao limpar agendamentos concluídos:', error);
-            return { success: false, error: error.message };
-        }
-    }
-
-    /**
-     * Limpar agendamentos cancelados
-     */
-    clearCanceledAppointments() {
-        try {
-            const agendamentos = JSON.parse(localStorage.getItem('agendamentos') || '[]');
-            const initialCount = agendamentos.length;
-
-            // Filtrar agendamentos cancelados
-            const filteredAgendamentos = agendamentos.filter(agendamento => {
-                return agendamento.status !== 'cancelado' && agendamento.status !== 'Cancelado';
-            });
-
-            const removedCount = initialCount - filteredAgendamentos.length;
-
-            if (removedCount > 0) {
-                localStorage.setItem('agendamentos', JSON.stringify(filteredAgendamentos));
-                
-                console.log(`[SUCCESS] ${removedCount} agendamentos cancelados removidos`);
-                
-                if (window.showNotification) {
-                    window.showNotification({
-                        type: 'success',
-                        title: 'Agendamentos Cancelados Removidos',
-                        message: `${removedCount} agendamentos cancelados foram removidos`,
-                        duration: 4000
-                    });
-                }
-
-                // Atualizar interface
-                if (window.loadAgendamentos) {
-                    window.loadAgendamentos();
-                }
-            } else {
-                if (window.showNotification) {
-                    window.showNotification({
-                        type: 'info',
-                        title: 'Nenhum Agendamento Cancelado',
-                        message: 'Não foram encontrados agendamentos cancelados para remover',
-                        duration: 3000
-                    });
-                }
-            }
-
-            return { success: true, deletedCount: removedCount, message: `${removedCount} agendamentos cancelados removidos` };
-        } catch (error) {
-            console.error('❌ Erro ao limpar agendamentos cancelados:', error);
-            return { success: false, error: error.message };
-        }
-    }
-
-    /**
-     * Remover agendamentos duplicados
-     */
-    removeDuplicateAppointments() {
-        try {
-            const agendamentos = JSON.parse(localStorage.getItem('agendamentos') || '[]');
-            const initialCount = agendamentos.length;
-
-            // Criar mapa para detectar duplicatas
-            const uniqueAgendamentos = [];
-            const seenKeys = new Set();
-
-            agendamentos.forEach(agendamento => {
-                // Criar chave única baseada em dados importantes
-                const key = `${agendamento.data}_${agendamento.hora}_${agendamento.cliente}_${agendamento.userId}`;
-                
-                if (!seenKeys.has(key)) {
-                    seenKeys.add(key);
-                    uniqueAgendamentos.push(agendamento);
-                }
-            });
-
-            const removedCount = initialCount - uniqueAgendamentos.length;
-
-            if (removedCount > 0) {
-                localStorage.setItem('agendamentos', JSON.stringify(uniqueAgendamentos));
-                
-                console.log(`[SUCCESS] ${removedCount} agendamentos duplicados removidos`);
-                
-                if (window.showNotification) {
-                    window.showNotification({
-                        type: 'success',
-                        title: 'Duplicatas Removidas',
-                        message: `${removedCount} agendamentos duplicados foram removidos`,
-                        duration: 4000
-                    });
-                }
-
-                // Atualizar interface
-                if (window.loadAgendamentos) {
-                    window.loadAgendamentos();
-                }
-            } else {
-                if (window.showNotification) {
-                    window.showNotification({
-                        type: 'info',
-                        title: 'Sem Duplicatas',
-                        message: 'Não foram encontrados agendamentos duplicados',
-                        duration: 3000
-                    });
-                }
-            }
-
-            return { success: true, deletedCount: removedCount, message: `${removedCount} duplicatas removidas` };
-        } catch (error) {
-            console.error('❌ Erro ao remover duplicatas:', error);
-            return { success: false, error: error.message };
-        }
-    }
-
-    /**
-     * Limpar dados inválidos
-     */
-    clearInvalidData() {
-        try {
-            const agendamentos = JSON.parse(localStorage.getItem('agendamentos') || '[]');
-            const initialCount = agendamentos.length;
-
-            // Filtrar agendamentos inválidos
-            const validAgendamentos = agendamentos.filter(agendamento => {
-                // Verificar campos obrigatórios
-                if (!agendamento.id || !agendamento.data || !agendamento.hora || !agendamento.cliente) {
-                    return false;
-                }
-
-                // Verificar formato de data
-                const dataRegex = /^\d{4}-\d{2}-\d{2}$/;
-                if (!dataRegex.test(agendamento.data)) {
-                    return false;
-                }
-
-                // Verificar formato de hora
-                const horaRegex = /^\d{2}:\d{2}$/;
-                if (!horaRegex.test(agendamento.hora)) {
-                    return false;
-                }
-
-                // Verificar se a data é válida
-                const date = new Date(agendamento.data);
-                if (isNaN(date.getTime())) {
-                    return false;
-                }
-
-                return true;
-            });
-
-            const removedCount = initialCount - validAgendamentos.length;
-
-            if (removedCount > 0) {
-                localStorage.setItem('agendamentos', JSON.stringify(validAgendamentos));
-                
-                console.log(`[SUCCESS] ${removedCount} agendamentos inválidos removidos`);
-                
-                if (window.showNotification) {
-                    window.showNotification({
-                        type: 'warning',
-                        title: 'Dados Inválidos Removidos',
-                        message: `${removedCount} agendamentos com dados inválidos foram removidos`,
-                        duration: 4000
-                    });
-                }
-
-                // Atualizar interface
-                if (window.loadAgendamentos) {
-                    window.loadAgendamentos();
-                }
-            }
-
-            return { success: true, removedCount, message: `${removedCount} dados inválidos removidos` };
-        } catch (error) {
-            console.error('❌ Erro ao limpar dados inválidos:', error);
-            return { success: false, error: error.message };
-        }
-    }
-
-    /**
-     * Otimizar armazenamento
-     */
-    optimizeStorage() {
-        try {
-            let totalSaved = 0;
-
-            // Compactar agendamentos
-            const agendamentos = JSON.parse(localStorage.getItem('agendamentos') || '[]');
-            const compactedAgendamentos = agendamentos.map(agendamento => {
-                // Remover campos desnecessários ou vazios
-                const compact = { ...agendamento };
-                
-                // Remover campos vazios
-                Object.keys(compact).forEach(key => {
-                    if (compact[key] === '' || compact[key] === null || compact[key] === undefined) {
-                        delete compact[key];
-                    }
-                });
-
-                return compact;
-            });
-
-            const originalSize = JSON.stringify(agendamentos).length;
-            const compactedSize = JSON.stringify(compactedAgendamentos).length;
-            const savedBytes = originalSize - compactedSize;
-            totalSaved += savedBytes;
-
-            if (savedBytes > 0) {
-                localStorage.setItem('agendamentos', JSON.stringify(compactedAgendamentos));
-            }
-
-            // Limpar cache antigo
-            const cacheKeys = ['searchCache', 'tempData', 'draftAgendamentos'];
-            cacheKeys.forEach(key => {
-                const data = localStorage.getItem(key);
-                if (data) {
-                    try {
-                        const parsed = JSON.parse(data);
-                        if (Array.isArray(parsed) && parsed.length === 0) {
-                            localStorage.removeItem(key);
-                            totalSaved += data.length;
-                        }
-                    } catch (e) {
-                        // Se não conseguir parsear, remover
-                        localStorage.removeItem(key);
-                        totalSaved += data.length;
-                    }
-                }
-            });
-
-            console.log(`[SUCCESS] Armazenamento otimizado - ${totalSaved} bytes economizados`);
-            
-            if (window.showNotification) {
-                window.showNotification({
-                    type: 'success',
-                    title: 'Armazenamento Otimizado',
-                    message: `${Math.round(totalSaved / 1024)} KB de espaço foram liberados`,
-                    duration: 3000
-                });
-            }
-
-            return { success: true, savedBytes: totalSaved, message: 'Armazenamento otimizado' };
-        } catch (error) {
-            console.error('❌ Erro ao otimizar armazenamento:', error);
-            return { success: false, error: error.message };
-        }
-    }
-
-    /**
-     * Executar limpeza completa (recomendada)
-     */
-    performFullCleanup() {
-        try {
-            console.log('🧹 Iniciando limpeza completa...');
-
-            const results = {
-                oldAppointments: this.clearOldAppointments(),
-                oldNotifications: this.clearOldNotifications(),
-                duplicates: this.removeDuplicateAppointments(),
-                invalidData: this.clearInvalidData(),
-                optimization: this.optimizeStorage()
-            };
-
-            const totalRemoved = 
-                (results.oldAppointments.removedCount || 0) +
-                (results.duplicates.removedCount || 0) +
-                (results.invalidData.removedCount || 0);
-
-            console.log('[SUCCESS] Limpeza completa finalizada');
-            
-            if (window.showNotification) {
-                window.showNotification({
-                    type: 'success',
-                    title: 'Limpeza Completa Finalizada',
-                    message: `${totalRemoved} itens removidos e armazenamento otimizado`,
-                    duration: 5000
-                });
-            }
-
-            return { success: true, results, totalRemoved };
-        } catch (error) {
-            console.error('❌ Erro na limpeza completa:', error);
-            return { success: false, error: error.message };
-        }
-    }
-
-    /**
-     * Obter estatísticas de dados
+     * Obter estatísticas dos dados
      */
     getDataStats() {
         try {
             const agendamentos = JSON.parse(localStorage.getItem('agendamentos') || '[]');
             const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
-
+            
             const now = new Date();
             const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
-            const ninetyDaysAgo = new Date(now.getTime() - (90 * 24 * 60 * 60 * 1000));
-
-            const stats = {
-                total: {
-                    agendamentos: agendamentos.length,
-                    notifications: notifications.length
-                },
-                recent: {
-                    agendamentos: agendamentos.filter(a => new Date(a.createdAt || a.data) >= thirtyDaysAgo).length,
-                    notifications: notifications.filter(n => new Date(n.createdAt) >= thirtyDaysAgo).length
-                },
-                old: {
-                    agendamentos: agendamentos.filter(a => new Date(a.data) < ninetyDaysAgo).length,
-                    notifications: notifications.filter(n => new Date(n.createdAt) < ninetyDaysAgo).length
-                },
-                storage: {
-                    agendamentos: JSON.stringify(agendamentos).length,
-                    notifications: JSON.stringify(notifications).length,
-                    total: JSON.stringify(agendamentos).length + JSON.stringify(notifications).length
-                }
+            
+            return {
+                totalAgendamentos: agendamentos.length,
+                totalNotifications: notifications.length,
+                agendamentosAntigos: agendamentos.filter(a => new Date(a.data) < thirtyDaysAgo).length,
+                agendamentosConcluidos: agendamentos.filter(a => a.status === 'Concluído').length,
+                agendamentosCancelados: agendamentos.filter(a => a.status === 'Cancelado').length,
+                storageSize: this.getStorageSize(),
+                lastBackup: localStorage.getItem('lastBackup') || null
             };
-
-            return stats;
         } catch (error) {
             console.error('❌ Erro ao obter estatísticas:', error);
             return null;
         }
     }
+
+    /**
+     * Obter tamanho do storage
+     */
+    getStorageSize() {
+        try {
+            let totalSize = 0;
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                totalSize += (key.length + value.length) * 2; // UTF-16
+            }
+            return totalSize;
+        } catch (error) {
+            return 0;
+        }
+    }
+
+    /**
+     * Verificar se há dados para limpar
+     */
+    hasDataToClean() {
+        try {
+            const agendamentos = JSON.parse(localStorage.getItem('agendamentos') || '[]');
+            return agendamentos.length > 0;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    /**
+     * Limpeza rápida (sem backup)
+     */
+    async quickClear() {
+        if (this.isProcessing) {
+            return { success: false, error: 'Operação já em andamento' };
+        }
+
+        this.isProcessing = true;
+
+        try {
+            const result = await this.executeCleanup();
+            
+            if (result.success) {
+                await this.updateInterface();
+                return { success: true, message: 'Limpeza rápida executada' };
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (error) {
+            console.error('❌ Erro na limpeza rápida:', error);
+            return { success: false, error: error.message };
+        } finally {
+            this.isProcessing = false;
+        }
+    }
+
+    /**
+     * Configurar opções da lixeira
+     */
+    configure(options) {
+        if (options.backupEnabled !== undefined) {
+            this.backupEnabled = options.backupEnabled;
+        }
+        
+        if (options.confirmationRequired !== undefined) {
+            this.confirmationRequired = options.confirmationRequired;
+        }
+        
+        if (options.maxBackups !== undefined) {
+            this.maxBackups = options.maxBackups;
+        }
+        
+        console.log('⚙️ Configurações da lixeira atualizadas');
+    }
 }
 
-// Instância global do limpador de dados
-window.dataCleaner = new DataCleaner();
+// Instância global do sistema de lixeira
+const dataCleaner = new DataCleaner();
 
-// Exportar para uso em Node.js/Electron
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = DataCleaner;
-}
+// Exportar para uso global
+window.dataCleaner = dataCleaner;
+window.trashSystem = dataCleaner;
+
+console.log('🗑️ Sistema de Lixeira Moderno carregado');

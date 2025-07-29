@@ -618,11 +618,25 @@ autoUpdater.on('update-not-available', (info) => {
 
 autoUpdater.on('error', (err) => {
   console.error('Erro no autoUpdater:', err);
-  // Não enviar erro para o renderer se for erro de "no published versions"
-  if (!err.message.includes('No published versions on GitHub')) {
-    if (mainWindow) {
-      mainWindow.webContents.send('update-error', err);
-    }
+  // Filtrar erros que não devem ser mostrados ao usuário
+  const ignoredErrors = [
+    'No published versions on GitHub',
+    'Cannot find latest.yml',
+    'latest.yml in the latest release artifacts',
+    'HttpError: 404',
+    'ENOTFOUND',
+    'ECONNREFUSED'
+  ];
+  
+  const shouldIgnore = ignoredErrors.some(ignoredError => 
+    err.message && err.message.includes(ignoredError)
+  );
+  
+  if (!shouldIgnore && mainWindow) {
+    mainWindow.webContents.send('update-error', {
+      message: 'Erro ao verificar atualizações. Tente novamente mais tarde.',
+      details: err.message
+    });
   }
 });
 

@@ -4,7 +4,7 @@ const path = require('path');
 const Store = require('electron-store');
 const fs = require('fs');
 const os = require('os');
-const WebSocketServer = require('./src/server/websocket-server');
+const WebSocketServer = require('../src/server/websocket-server');
 
 // Configuração do armazenamento
 const store = new Store();
@@ -151,7 +151,7 @@ function getSystemUsers() {
 // Carregar usuários do arquivo JSON
 function loadUsers() {
   try {
-    const usersPath = path.join(__dirname, 'src', 'data', 'users.json');
+    const usersPath = path.join(__dirname, '..', 'src', 'data', 'users.json');
     const usersData = fs.readFileSync(usersPath, 'utf8');
     return JSON.parse(usersData);
   } catch (error) {
@@ -183,7 +183,7 @@ function createLoginWindow() {
       webSecurity: false,
       allowRunningInsecureContent: true
     },
-    icon: path.join(__dirname, 'logo.ico'),
+    icon: path.join(__dirname, '..', 'assets', 'logo.ico'),
     titleBarStyle: 'hidden',
     frame: false, // Remove os botões padrão do Electron
     show: false,
@@ -191,7 +191,7 @@ function createLoginWindow() {
   });
 
   // Carregar a página de login
-  loginWindow.loadFile('src/views/login.html');
+  loginWindow.loadFile(path.join(__dirname, '..', 'src', 'views', 'login.html'));
 
   // Mostrar janela quando estiver pronta
   loginWindow.once('ready-to-show', () => {
@@ -222,7 +222,7 @@ function createMainWindow() {
       webSecurity: false,
       allowRunningInsecureContent: true
     },
-    icon: path.join(__dirname, 'logo.ico'),
+    icon: path.join(__dirname, '..', 'assets', 'logo.ico'),
     titleBarStyle: 'hidden',
     frame: false, // Remove os botões padrão do Electron
     show: false,
@@ -230,7 +230,7 @@ function createMainWindow() {
   });
 
   // Carregar a página principal
-  mainWindow.loadFile('src/views/main.html');
+  mainWindow.loadFile(path.join(__dirname, '..', 'src', 'views', 'main.html'));
 
   // Mostrar janela quando estiver pronta
   mainWindow.once('ready-to-show', () => {
@@ -379,6 +379,21 @@ ipcMain.handle('deleteAgendamento', async (event, id) => {
   const filtered = agendamentos.filter(a => a.id !== id);
   store.set('agendamentos', filtered);
   return { success: true };
+});
+
+// Handler para deletar agendamento permanentemente
+ipcMain.handle('deletePostItPermanently', async (event, id) => {
+  try {
+    const agendamentos = store.get('agendamentos', []);
+    const filtered = agendamentos.filter(a => a.id !== id);
+    store.set('agendamentos', filtered);
+    
+    console.log(`🗑️ Agendamento ${id} deletado permanentemente`);
+    return { success: true, deletedId: id };
+  } catch (error) {
+    console.error('Erro ao deletar agendamento permanentemente:', error);
+    return { success: false, error: error.message };
+  }
 });
 
 // Handler para compartilhar agendamento
@@ -701,13 +716,14 @@ ipcMain.handle('get-app-version', () => {
 // ===== SERVIDOR WEBSOCKET =====
 
 // Inicializar servidor WebSocket
-function initializeWebSocketServer() {
+async function initializeWebSocketServer() {
   try {
+    console.log('🔄 Iniciando servidor WebSocket...');
     wsServer = new WebSocketServer(3001);
-    const started = wsServer.start();
+    const started = await wsServer.start();
     
     if (started) {
-      console.log('[SUCCESS] Servidor WebSocket iniciado com sucesso');
+      console.log('[SUCCESS] Servidor WebSocket iniciado com sucesso na porta 3001');
     } else {
       console.error('[ERROR] Falha ao iniciar servidor WebSocket');
     }
@@ -756,9 +772,9 @@ ipcMain.handle('restartWebSocketServer', async () => {
 // ===== EVENTOS DO APP =====
 
 // Quando o app estiver pronto
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // Inicializar servidor WebSocket
-  initializeWebSocketServer();
+  await initializeWebSocketServer();
   
   // Criar janela de login
   createLoginWindow();

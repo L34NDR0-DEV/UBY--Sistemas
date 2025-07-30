@@ -216,26 +216,58 @@ window.speakText = speakText;
 // Notificações específicas do sistema
 window.TTSNotifications = {
     agendamentoCriado: (nomeCliente, horario, cidade) => {
+        console.log('[DEBUG] TTSNotifications.agendamentoCriado chamado:', { nomeCliente, horario, cidade });
+        
+        if (!window.notificationSystem) {
+            console.error('[ERROR] Sistema de notificações não encontrado!');
+        }
+        
         ttsManager.speakAgendamentoCriado(nomeCliente, horario, cidade);
+        
+        if (window.notificationSystem) {
+            window.notificationSystem.createNotification({
+                type: 'success',
+                title: 'Agendamento Criado',
+                message: `Novo agendamento para ${nomeCliente} às ${horario} em ${cidade}`,
+                data: { nomeCliente, horario, cidade },
+                actions: [
+                    {
+                        id: 'view',
+                        label: 'Visualizar',
+                        style: 'primary',
+                        callback: (data) => {
+                            console.log('[DEBUG] Ação visualizar clicada:', data);
+                        }
+                    }
+                ]
+            });
+        }
+        
+        console.log('[DEBUG] Notificação de agendamento criado enviada');
     },
     
     agendamentoConcluido: (nomeCliente) => {
+        console.log('[DEBUG] TTSNotifications.agendamentoConcluido chamado:', nomeCliente);
         ttsManager.speakAgendamentoConcluido(nomeCliente);
     },
     
     agendamentoCancelado: (nomeCliente) => {
+        console.log('[DEBUG] TTSNotifications.agendamentoCancelado chamado:', nomeCliente);
         ttsManager.speakAgendamentoCancelado(nomeCliente);
     },
     
     agendamentoAtrasado: (nomeCliente, minutosAtraso) => {
+        console.log('[DEBUG] TTSNotifications.agendamentoAtrasado chamado:', { nomeCliente, minutosAtraso });
         ttsManager.speakAgendamentoAtrasado(nomeCliente, minutosAtraso);
     },
     
     agendamentoProximo: (nomeCliente, minutosRestantes) => {
+        console.log('[DEBUG] TTSNotifications.agendamentoProximo chamado:', { nomeCliente, minutosRestantes });
         ttsManager.speakAgendamentoProximo(nomeCliente, minutosRestantes);
     },
     
     teste: () => {
+        console.log('[DEBUG] TTSNotifications.teste chamado');
         ttsManager.speakTest();
     }
 };

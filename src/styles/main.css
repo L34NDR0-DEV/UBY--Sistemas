@@ -1211,77 +1211,6 @@ input:checked + .toggle-slider:before {
 
 
 
-/* Nova Lixeira */
-.trash-btn {
-    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-    border: 2px solid #e74c3c;
-    color: white;
-    padding: 10px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 14px;
-    position: relative;
-    overflow: hidden;
-    min-width: 44px;
-    min-height: 44px;
-    box-shadow: 0 2px 8px rgba(231, 76, 60, 0.2);
-    transition: all 0.2s ease;
-}
-
-.trash-btn:hover {
-    background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
-    border-color: #c0392b;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
-}
-
-.trash-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(231, 76, 60, 0.3);
-}
-
-.trash-btn:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.3);
-}
-
-.trash-btn.processing {
-    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-    border-color: #6c757d;
-    cursor: not-allowed;
-    pointer-events: none;
-}
-
-.trash-btn.processing::after {
-    content: '';
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    border: 2px solid transparent;
-    border-top: 2px solid white;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Responsividade da lixeira */
-@media (max-width: 768px) {
-    .trash-btn {
-        padding: 8px 12px;
-        font-size: 13px;
-        min-width: 40px;
-        min-height: 40px;
-    }
-}
-
 /* Filtros avançados */
 .search-filters {
     position: absolute;
@@ -1466,7 +1395,7 @@ input:checked + .toggle-slider:before {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 320px));
     gap: 25px;
-    justify-content: center;
+    justify-content: start;
     align-items: start;
     /* Garantir que o container seja visível */
     visibility: visible !important;
@@ -1477,7 +1406,7 @@ input:checked + .toggle-slider:before {
     background: transparent !important;
     padding: 0 20px;
     /* Garantir que os cards não se estiquem */
-    justify-items: center;
+    justify-items: start;
 }
 
 .empty-state {
@@ -1501,7 +1430,7 @@ input:checked + .toggle-slider:before {
     margin: 0;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
     position: relative;
-    height: 300px;
+    height: 520px;
     width: 100%;
     max-width: 320px;
     min-width: 280px;
@@ -1564,18 +1493,18 @@ input:checked + .toggle-slider:before {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
 }
 
 .card-title {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 600;
     color: #2c3e50;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
 }
 
 .card-time {
-    font-size: 14px;
+    font-size: 15px;
     color: #7f8c8d;
     display: flex;
     align-items: center;
@@ -1583,9 +1512,9 @@ input:checked + .toggle-slider:before {
 }
 
 .priority-badge {
-    padding: 4px 8px;
+    padding: 6px 10px;
     border-radius: 12px;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
 }
@@ -1606,15 +1535,15 @@ input:checked + .toggle-slider:before {
 }
 
 .card-info {
-    margin-bottom: 15px;
+    margin-bottom: 25px;
 }
 
 .info-item {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-    font-size: 14px;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 15px;
     color: #555;
 }
 
@@ -1626,33 +1555,35 @@ input:checked + .toggle-slider:before {
 
 .card-actions {
     display: flex;
-    gap: 6px;
+    gap: 10px;
     flex-wrap: wrap;
-    padding: 0;
+    padding: 15px 0 0 0;
     margin-bottom: 0;
     width: 100%;
     box-sizing: border-box;
+    justify-content: space-between;
 }
 
 .action-btn {
-    padding: 6px 10px;
+    padding: 12px 16px;
     border: none;
-    border-radius: 6px;
-    font-size: 11px;
+    border-radius: 8px;
+    font-size: 14px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     flex: 0 1 auto;
-    min-width: 60px;
-    max-width: 120px;
+    min-width: 80px;
+    max-width: 140px;
     text-align: center;
     justify-content: center;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    margin-bottom: 8px;
 }
 
 .action-btn.concluir {
@@ -1835,7 +1766,7 @@ input:checked + .toggle-slider:before {
         grid-template-columns: repeat(auto-fit, minmax(280px, 320px));
         gap: 20px;
         padding: 0 10px;
-        justify-items: center;
+        justify-items: start;
     }
     
     .tabs {
@@ -1879,242 +1810,313 @@ input:checked + .toggle-slider:before {
     background: #a8a8a8;
 }
 
-/* Estilos específicos para post-its integrados */
+/* Post-its - Design baseado no post-ti.html */
 .agendamento-card.postit-style {
-    /* Garantir que os post-its sejam visíveis */
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    position: relative !important;
-    z-index: 1 !important;
-    box-shadow: 
-        0 4px 8px rgba(0, 0, 0, 0.15),
-        0 1px 3px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    position: relative;
-    margin: 0;
-    border-radius: 2px;
-    transform: none; /* Removido rotate */
-    transition: none; /* Removido transition */
-    border: none;
-    background: linear-gradient(135deg, #fff9c4 0%, #fff176 100%);
-    height: 350px;
-    width: 100%;
-    max-width: 320px; /* Limitar largura máxima para evitar esticamento */
-    min-width: 280px; /* Manter largura mínima */
-    padding: 18px 15px 15px 15px;
+    width: 340px;
+    min-height: 410px;
+    border-radius: 18px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.11), 0 1.5px 6px rgba(0,0,0,0.07);
+    padding: 28px 20px 20px 20px;
+    margin: 16px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    overflow: hidden; /* Garantir que nada saia dos limites */
-    box-sizing: border-box; /* Incluir padding no cálculo do tamanho */
-}
-
-.agendamento-card.postit-style:nth-child(even) {
-    transform: none; /* Removido rotate */
-}
-
-/* Garantir que agendamentos únicos não se estiquem */
-.agendamentos-container:has(.agendamento-card:only-child) .agendamento-card.postit-style {
-    justify-self: center;
-    max-width: 320px;
-    width: 100%;
-}
-
-/* Fallback para navegadores que não suportam :has() */
-.agendamentos-container .agendamento-card.postit-style:only-child {
-    justify-self: center;
-    max-width: 320px;
-    width: 100%;
+    position: relative;
+    background: #fffbe7;
+    gap: 10px;
+    transition: all 0.3s ease;
+    font-family: 'Segoe UI', Arial, sans-serif;
 }
 
 .agendamento-card.postit-style:hover {
-    transform: none; /* Removido hover effects */
-    z-index: 10;
-    box-shadow: 
-        0 4px 8px rgba(0, 0, 0, 0.15),
-        0 1px 3px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.1);
 }
 
-.agendamento-card.postit-style::before {
-    content: '';
-    position: absolute;
-    top: -8px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 50px;
-    height: 25px;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(240, 240, 240, 0.8) 100%);
-    border-radius: 0 0 15px 15px;
-    box-shadow: 
-        0 2px 6px rgba(0, 0, 0, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.6);
-    border: 1px solid rgba(200, 200, 200, 0.3);
+/* Cliente em destaque - Design do post-ti.html */
+.agendamento-card.postit-style .cliente-destaque {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 15px;
+    margin-top: 2px;
+    font-size: 1.35rem;
+    font-family: 'Segoe UI Semibold', 'Segoe UI', Arial, sans-serif;
+    color: #d4a300;
+    background: rgba(255,253,226,0.88);
+    border-radius: 10px;
+    padding: 12px 15px;
+    box-shadow: 0 2px 10px rgba(232,188,37,0.08);
+    letter-spacing: 1px;
+    font-weight: bold;
 }
 
-.agendamento-card.postit-style::after {
+.agendamento-card.postit-style .cliente-destaque .icon {
+    font-size: 1.45rem;
+    color: #eac012;
+}
+
+.agendamento-card.postit-style .cliente-nome {
+    flex: 1;
+    text-align: center;
+}
+
+/* Conteúdo do post-it */
+.agendamento-card.postit-style .postit-content {
+    flex: 1;
+    font-size: 1rem;
+    color: #3c3c3c;
+    position: relative;
+}
+
+/* Linhas de informação */
+.agendamento-card.postit-style .postit-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+    gap: 6px;
+    position: relative;
+}
+
+.agendamento-card.postit-style .postit-row .icon {
+    color: #eac012;
+    font-size: 1.05rem;
+    width: 22px;
+    text-align: center;
+}
+
+.agendamento-card.postit-style .postit-label {
+    font-weight: 500;
+    color: #757575;
+    white-space: nowrap;
+}
+
+.agendamento-card.postit-style .postit-value {
+    color: #222;
+    font-weight: 400;
+    margin-left: 2px;
+    white-space: pre;
+}
+
+/* Botão de copiar */
+.agendamento-card.postit-style .copy-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-left: 6px;
+    color: #d7a900;
+    font-size: 1rem;
+    transition: color 0.15s;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+.agendamento-card.postit-style .copy-btn:hover {
+    color: #fff;
+    background: #d7a900;
+}
+
+/* Status do post-it */
+.agendamento-card.postit-style .postit-status {
+    background: #f1e289;
+    color: #807200;
+    border-radius: 6px;
+    padding: 2px 10px;
+    font-size: 0.98rem;
+    font-weight: 600;
+    display: inline-block;
+    margin-left: 4px;
+}
+
+/* Observação especial */
+.agendamento-card.postit-style .postit-observacao {
+    background: #f6f3d3;
+    border-left: 3px solid #eac012;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 1rem;
+    color: #63634e;
+    margin-bottom: 10px;
+}
+
+/* Footer dos botões - Design do post-ti.html */
+.agendamento-card.postit-style .postit-footer {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+    padding-top: 15px;
+    border-top: 1px solid rgba(0,0,0,0.1);
+}
+
+.agendamento-card.postit-style .postit-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    flex-grow: 1;
+    flex-basis: calc(50% - 4px);
+    max-width: calc(50% - 4px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+}
+
+.agendamento-card.postit-style .postit-btn i { 
+    font-size: 12px;
+    font-weight: 900;
+}
+
+/* Efeito de brilho nos botões */
+.agendamento-card.postit-style .postit-btn::before {
     content: '';
     position: absolute;
     top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: 
-        repeating-linear-gradient(
-            0deg,
-            transparent,
-            transparent 24px,
-            rgba(200, 200, 200, 0.1) 25px
-        );
-    pointer-events: none;
-    border-radius: 2px;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
 }
 
-/* Nome do cliente em destaque */
-.agendamento-card.postit-style .card-title {
-    font-size: 22px !important;
-    font-weight: 700 !important;
-    color: #2c3e50 !important;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-    margin-bottom: 10px !important;
-    line-height: 1.2;
-    text-align: center;
-    padding: 6px 0;
-    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+.agendamento-card.postit-style .postit-btn:hover::before {
+    left: 100%;
 }
 
-/* Horário e data em destaque secundário */
-.agendamento-card.postit-style .card-time {
-    font-size: 16px !important;
-    font-weight: 600 !important;
-    color: #e74c3c !important;
-    text-align: center;
-    margin-bottom: 12px !important;
-    background: rgba(255, 255, 255, 0.7);
-    padding: 5px 8px;
-    border-radius: 12px;
-    border: 1px solid rgba(231, 76, 60, 0.2);
+/* Botão Concluir - Verde */
+.agendamento-card.postit-style .concluir-btn,
+.agendamento-card.postit-style .postit-btn[onclick*="concluirAgendamento"] {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+    color: white;
 }
 
-/* Ajustes no header do card */
-.agendamento-card.postit-style .card-header {
-    flex-direction: column !important;
-    align-items: center !important;
-    margin-bottom: 12px !important;
+.agendamento-card.postit-style .concluir-btn:hover,
+.agendamento-card.postit-style .postit-btn[onclick*="concluirAgendamento"]:hover {
+    background: linear-gradient(135deg, #1e7e34, #155724);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
 }
 
-/* Badge de prioridade mais discreto */
-.agendamento-card.postit-style .priority-badge {
-    position: absolute !important;
-    top: 12px !important;
-    right: 12px !important;
-    font-size: 9px !important;
-    padding: 3px 6px !important;
-    border-radius: 10px !important;
-    text-transform: uppercase;
-    font-weight: 600;
-    letter-spacing: 0.5px;
+/* Botão Cancelar - Amarelo/Laranja */
+.agendamento-card.postit-style .cancelar-btn,
+.agendamento-card.postit-style .postit-btn[onclick*="openCancelModal"] {
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+    color: #212529;
 }
 
-/* Informações do card mais organizadas */
-.agendamento-card.postit-style .card-info {
-    margin-bottom: 12px !important;
+.agendamento-card.postit-style .cancelar-btn:hover,
+.agendamento-card.postit-style .postit-btn[onclick*="openCancelModal"]:hover {
+    background: linear-gradient(135deg, #e0a800, #d39e00);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
 }
 
-.agendamento-card.postit-style .info-item {
-    font-size: 13px !important;
-    margin-bottom: 6px !important;
-    padding: 3px 0;
-    border-bottom: 1px dotted rgba(0, 0, 0, 0.1);
+/* Botão Editar - Azul */
+.agendamento-card.postit-style .editar-btn,
+.agendamento-card.postit-style .postit-btn[onclick*="openEditModal"] {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    color: white;
 }
 
-.agendamento-card.postit-style .info-item:last-child {
-    border-bottom: none;
+.agendamento-card.postit-style .editar-btn:hover,
+.agendamento-card.postit-style .postit-btn[onclick*="openEditModal"]:hover {
+    background: linear-gradient(135deg, #138496, #117a8b);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
 }
 
-.agendamento-card.postit-style .info-item svg {
-    width: 12px !important;
-    height: 12px !important;
-    margin-right: 6px !important;
-    color: #7f8c8d;
+/* Botão Compartilhar - Roxo */
+.agendamento-card.postit-style .compartilhar-btn,
+.agendamento-card.postit-style .postit-btn[onclick*="openShareModal"] {
+    background: linear-gradient(135deg, #6f42c1, #5a32a3);
+    color: white;
 }
 
-/* Ações do card mais compactas */
-.agendamento-card.postit-style .card-actions {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 3px !important;
-    justify-content: center !important;
-    margin-top: auto !important;
-    padding: 0 !important;
-    margin-bottom: 0 !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
+.agendamento-card.postit-style .compartilhar-btn:hover,
+.agendamento-card.postit-style .postit-btn[onclick*="openShareModal"]:hover {
+    background: linear-gradient(135deg, #5a32a3, #4e2a8e);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(111, 66, 193, 0.3);
 }
 
-.agendamento-card.postit-style .action-btn {
-    font-size: 10px !important;
-    padding: 4px 8px !important;
-    border-radius: 10px !important;
-    border: 1px solid rgba(0, 0, 0, 0.1) !important;
-    background: rgba(255, 255, 255, 0.8) !important;
-    color: #2c3e50 !important;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    transition: all 0.2s ease;
-    flex: 0 1 auto !important;
-    min-width: 45px !important;
-    max-width: 85px !important;
-    text-align: center !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
+/* Botão Localização - Laranja */
+.agendamento-card.postit-style .localizacao-btn,
+.agendamento-card.postit-style .postit-btn[onclick*="openLocationModal"] {
+    background: linear-gradient(135deg, #fd7e14, #e8650e);
+    color: white;
 }
 
-.agendamento-card.postit-style .action-btn:hover {
-    background: rgba(255, 255, 255, 1) !important;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.agendamento-card.postit-style .localizacao-btn:hover,
+.agendamento-card.postit-style .postit-btn[onclick*="openLocationModal"]:hover {
+    background: linear-gradient(135deg, #e8650e, #dc5f0a);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(253, 126, 20, 0.3);
 }
 
-.agendamento-card.postit-style .action-btn svg {
-    width: 8px !important;
-    height: 8px !important;
+/* Botão Excluir - Vermelho */
+.agendamento-card.postit-style .delete-btn, 
+.agendamento-card.postit-style .postit-btn[onclick*="deleteAgendamento"] {
+    background: linear-gradient(135deg, #dc3545, #c82333) !important;
+    color: white !important;
 }
 
-/* Cores variadas para post-its mais realistas */
+.agendamento-card.postit-style .delete-btn:hover, 
+.agendamento-card.postit-style .postit-btn[onclick*="deleteAgendamento"]:hover {
+    background: linear-gradient(135deg, #c82333, #bd2130) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3) !important;
+}
+
+.agendamento-card.postit-style .delete-btn i,
+.agendamento-card.postit-style .postit-btn[onclick*="deleteAgendamento"] i {
+    color: white !important;
+}
+
+/* Estados ativos dos botões */
+.agendamento-card.postit-style .postit-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Cores variadas para post-its mais realistas - Design Profissional */
 .agendamento-card.postit-amarelo {
-    background: linear-gradient(135deg, #fff9c4 0%, #fff176 100%) !important;
-    border-left-color: #fbc02d !important;
+    background: linear-gradient(145deg, #fffbeb 0%, #fef3c7 100%) !important;
+    border: 2px solid rgba(245, 158, 11, 0.3) !important;
 }
 
 .agendamento-card.postit-rosa {
-    background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 100%) !important;
-    border-left-color: #e91e63 !important;
+    background: linear-gradient(145deg, #fdf2f8 0%, #fce7f3 100%) !important;
+    border: 2px solid rgba(236, 72, 153, 0.3) !important;
 }
 
 .agendamento-card.postit-azul {
-    background: linear-gradient(135deg, #e3f2fd 0%, #90caf9 100%) !important;
-    border-left-color: #2196f3 !important;
+    background: linear-gradient(145deg, #eff6ff 0%, #dbeafe 100%) !important;
+    border: 2px solid rgba(59, 130, 246, 0.3) !important;
 }
 
 .agendamento-card.postit-verde {
-    background: linear-gradient(135deg, #e8f5e8 0%, #a5d6a7 100%) !important;
-    border-left-color: #4caf50 !important;
+    background: linear-gradient(145deg, #f0fdf4 0%, #dcfce7 100%) !important;
+    border: 2px solid rgba(34, 197, 94, 0.3) !important;
 }
 
 .agendamento-card.postit-laranja {
-    background: linear-gradient(135deg, #fff3e0 0%, #ffcc80 100%) !important;
-    border-left-color: #ff9800 !important;
+    background: linear-gradient(145deg, #fff7ed 0%, #fed7aa 100%) !important;
+    border: 2px solid rgba(249, 115, 22, 0.3) !important;
 }
 
 .agendamento-card.postit-roxo {
-    background: linear-gradient(135deg, #f3e5f5 0%, #ce93d8 100%) !important;
-    border-left-color: #9c27b0 !important;
+    background: linear-gradient(145deg, #faf5ff 0%, #e9d5ff 100%) !important;
+    border: 2px solid rgba(147, 51, 234, 0.3) !important;
 }
 
 /* Informações de compartilhamento e ações do usuário */
@@ -2878,48 +2880,59 @@ input:checked + .toggle-slider:before {
     }
 }
 
-/* ===== MODAL DE LIMPEZA DE DADOS (LIXEIRA) - DESABILITADO ===== */
-/*
-.clear-data-modal {
-    max-width: 600px;
-    width: 90%;
-    max-height: 90vh;
-    overflow-y: auto;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: var(--bg-primary);
-    border-radius: 12px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    z-index: 10000;
+/* ===== SWEETALERT2 CUSTOMIZATION ===== */
+.swal-popup-modern {
+    border-radius: 16px !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15) !important;
+    border: 2px solid rgba(255, 107, 0, 0.1) !important;
+    backdrop-filter: blur(10px) !important;
 }
 
-.clear-data-modal .modal-header {
-    padding: 20px 25px;
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.swal-title-modern {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+    font-weight: 600 !important;
+    color: #2c3e50 !important;
+    font-size: 1.5rem !important;
 }
 
-.clear-data-modal .modal-header h3 {
-    margin: 0;
-    color: var(--text-primary);
-    font-size: 1.4rem;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+.swal-content-modern {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+    color: #5a6c7d !important;
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
 }
 
-.clear-data-modal .modal-body {
-    padding: 25px;
+.swal-confirm-modern {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 12px 24px !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3) !important;
+    transition: all 0.3s ease !important;
 }
 
-.clear-data-modal .modal-footer {
-    padding: 20px 25px;
-    border-top: 1px solid var(--border-color);
-    display: flex;
-    justify-content: flex-end;
-    gap: 15px;
+.swal-confirm-modern:hover {
+    background: linear-gradient(135deg, #c82333 0%, #a71e2a 100%) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 16px rgba(220, 53, 69, 0.4) !important;
 }
+
+.swal-cancel-modern {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%) !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 12px 24px !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3) !important;
+    transition: all 0.3s ease !important;
+}
+
+.swal-cancel-modern:hover {
+    background: linear-gradient(135deg, #5a6268 0%, #495057 100%) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 16px rgba(108, 117, 125, 0.4) !important;
+}
+

@@ -1,8 +1,10 @@
 {
   "name": "uby-agendamentos",
-  "version": "1.0.8",
-  "description": "Sistema de Gestão de Agendamentos UBY",
-  "main": "main.js",
+  "version": "6.0.0",
+  "description": "Sistema profissional de gestão de agendamentos desenvolvido com Electron",
+  "main": "app/main.js",
+  "author": "L34NDR0-DEV",
+  "license": "MIT",
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
@@ -11,63 +13,54 @@
     "build-mac": "electron-builder --mac",
     "build-linux": "electron-builder --linux",
     "publish": "electron-builder --publish=always",
-    "clean": "rimraf dist",
-    "version-check": "node -e \"console.log(require('./package.json').version)\"",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "echo \"Linting not configured\"",
-    "docs": "echo \"Documentation generation not configured\""
+    "clean": "rimraf dist build"
   },
-  "keywords": [
-    "electron",
-    "agendamentos",
-    "uby"
-  ],
-  "author": "UBY Sistemas",
-  "license": "MIT",
   "devDependencies": {
-    "electron": "^27.0.0",
-    "electron-builder": "^26.0.12",
-    "sharp": "^0.34.3"
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.0"
   },
   "dependencies": {
     "electron-store": "^8.1.0",
-    "electron-updater": "^6.1.4",
-    "sax": "^1.4.1",
-    "socket.io": "^4.8.1",
-    "socket.io-client": "^4.8.1",
-    "ws": "^8.18.3"
+    "electron-updater": "^6.0.0",
+    "electron-log": "^5.0.0",
+    "express": "^4.18.0",
+    "socket.io": "^4.7.0",
+    "sqlite3": "^5.1.0",
+    "uuid": "^10.0.0"
   },
   "build": {
     "appId": "com.uby.agendamentos",
-    "productName": "UBY Sistemas - Gestão de Agendamentos",
-    "icon": "src/assets/logo-256.png",
+    "productName": "UBY Agendamentos",
     "directories": {
       "output": "dist"
     },
     "files": [
-      "**/*",
-      "!node_modules/**/*",
-      "!dist/**/*",
+      "app/**/*",
+      "src/**/*",
+      "assets/**/*",
       "node_modules/**/*"
     ],
-    "asarUnpack": [
-      "node_modules/**/*"
-    ],
-    "publish": {
-      "provider": "github",
-      "owner": "L34NDR0-DEV",
-      "repo": "UBY--Sistemas"
-    },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "assets/logo.png"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/logo.png"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/logo.png"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "UBY Agendamentos",
-      "include": "installer.nsh"
+      "include": "build/installer.nsh"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "L34NDR0-DEV",
+      "repo": "uby-agendamentos"
     }
   }
 }

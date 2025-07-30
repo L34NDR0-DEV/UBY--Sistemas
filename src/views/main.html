@@ -6,14 +6,15 @@
     <title>UBY - Sistema de Agendamentos</title>
     
     <!-- Configurações de ícone da aplicação -->
-    <link rel="icon" type="image/x-icon" href="../../logo.ico">
-    <link rel="shortcut icon" type="image/x-icon" href="../../logo.ico">
-    <link rel="apple-touch-icon" href="../../logo.ico">
-    <meta name="msapplication-TileImage" content="../../logo.ico">
+    <link rel="icon" type="image/x-icon" href="../../assets/logo.ico">
+  <link rel="shortcut icon" type="image/x-icon" href="../../assets/logo.ico">
+  <link rel="apple-touch-icon" href="../../assets/logo.ico">
+  <meta name="msapplication-TileImage" content="../../assets/logo.ico">
     
     <link rel="stylesheet" href="../styles/main.css">
     <link rel="stylesheet" href="../styles/notifications.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <!-- Barra de controles da janela separada -->
@@ -101,13 +102,32 @@
                 <span class="btn-text">Tema</span>
             </button>
             
-            <button class="header-btn test-btn" id="testNotificationBtn" title="Notificações">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                </svg>
-                <span class="btn-text">Notificações</span>
-            </button>
+            <div class="notification-dropdown">
+                <button class="header-btn test-btn" id="testNotificationBtn" title="Notificações">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    <span class="btn-text">Notificações</span>
+                    <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                </button>
+                <div class="notification-panel" id="notificationPanel">
+                    <div class="notification-panel-header">
+                        <h3>Notificações</h3>
+                        <button class="clear-all-btn" id="clearAllNotifications">Limpar Todas</button>
+                    </div>
+                    <div class="notification-list" id="notificationList">
+                        <!-- Notificações serão inseridas aqui -->
+                    </div>
+                    <div class="notification-empty" id="notificationEmpty">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <p>Nenhuma notificação</p>
+                    </div>
+                </div>
+            </div>
             
             <button class="header-btn sair-btn" id="exitBtn" title="Sair do Sistema" onclick="handleLogout()">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -148,8 +168,7 @@
 
     </header>
 
-    <!-- Container de Notificações -->
-    <div id="notification-container" class="notification-container"></div>
+    <!-- Container de Notificações (removido - agora usa painel dropdown) -->
 
     <!-- Painel de controle removido - funcionalidades agora no header -->
 
@@ -240,8 +259,6 @@
                             <option value="">Selecione...</option>
                             <option value="Com Motorista">Com Motorista</option>
                             <option value="Aguardando Motorista">Aguardando Motorista</option>
-                            <option value="Em Andamento">Em Andamento</option>
-                            <option value="Pendente">Pendente</option>
                         </select>
                     </div>
                     
@@ -308,12 +325,13 @@
                     <div class="form-group">
                         <label for="linkCoordenadas">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF6B00" stroke-width="2">
-                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
                             </svg>
-                            Link de Coordenadas
+                            Coordenadas (Latitude, Longitude)
                         </label>
-                        <input type="url" id="linkCoordenadas" placeholder="https://maps.google.com/...">
+                        <input type="text" id="linkCoordenadas" placeholder="Ex: -23.5505,-46.6333" pattern="^-?\d+\.?\d*,-?\d+\.?\d*$" title="Formato: latitude,longitude (ex: -23.5505,-46.6333)">
+                        <small class="form-help">Digite as coordenadas no formato: latitude,longitude</small>
                     </div>
                 </div>
                 
@@ -389,8 +407,6 @@
                                 <option value="">Todos</option>
                                 <option value="Com Motorista">Com Motorista</option>
                                 <option value="Aguardando Motorista">Aguardando Motorista</option>
-                                <option value="Em Andamento">Em Andamento</option>
-                                <option value="Pendente">Pendente</option>
                                 <option value="Concluído">Concluído</option>
                                 <option value="Cancelado">Cancelado</option>
                             </select>
@@ -486,17 +502,6 @@
                     <button type="button" id="toggleFilters" class="toggle-filters" title="Filtros avançados">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"></polygon>
-                        </svg>
-                    </button>
-                    
-                    <!-- Nova Lixeira -->
-                    <button type="button" id="trashBtn" class="trash-btn" title="Apagar todos os agendamentos">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M3 6h18"></path>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
-                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            <line x1="10" y1="11" x2="10" y2="17"></line>
-                            <line x1="14" y1="11" x2="14" y2="17"></line>
                         </svg>
                     </button>
                     
@@ -599,8 +604,6 @@
                         <select id="editStatus" required>
                             <option value="Com Motorista">Com Motorista</option>
                             <option value="Aguardando Motorista">Aguardando Motorista</option>
-                            <option value="Em Andamento">Em Andamento</option>
-                            <option value="Pendente">Pendente</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -656,8 +659,9 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="editLinkCoordenadas">Link de Coordenadas</label>
-                        <input type="url" id="editLinkCoordenadas">
+                        <label for="editLinkCoordenadas">Coordenadas (Latitude, Longitude)</label>
+                        <input type="text" id="editLinkCoordenadas" placeholder="Ex: -23.5505,-46.6333" pattern="^-?\d+\.?\d*,-?\d+\.?\d*$" title="Formato: latitude,longitude (ex: -23.5505,-46.6333)">
+                        <small class="form-help">Digite as coordenadas no formato: latitude,longitude</small>
                     </div>
                 </div>
                 <div class="form-group full-width">
@@ -903,6 +907,7 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="../utils/data-cleaner.js"></script>

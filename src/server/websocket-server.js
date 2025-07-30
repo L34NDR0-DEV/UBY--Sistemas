@@ -1,6 +1,6 @@
 /**
  * Servidor WebSocket para comunicação em tempo real
- * Gerencia conexões, sincronização de dados e notificações
+ * Gerencia conexões, eventos e sincronização entre clientes
  */
 
 const { Server } = require('socket.io');
@@ -12,77 +12,100 @@ class WebSocketServer {
         this.server = null;
         this.io = null;
         this.connectedUsers = new Map();
-        this.rooms = new Map();
+        this.isRunning = false;
+        this.stats = {
+            connections: 0,
+            totalConnections: 0,
+            messagesReceived: 0,
+            messagesSent: 0
+        };
     }
 
     /**
-     * Inicializar servidor WebSocket
+     * Iniciar servidor WebSocket
      */
     start() {
-        try {
-            // Criar servidor HTTP
-            this.server = http.createServer();
-            
-            // Configurar Socket.IO
-            this.io = new Server(this.server, {
-                cors: {
-                    origin: "*",
-                    methods: ["GET", "POST"]
-                },
-                transports: ['websocket', 'polling']
-            });
+        return new Promise((resolve, reject) => {
+            try {
+                // Criar servidor HTTP
+                this.server = http.createServer();
+                
+                // Configurar Socket.IO
+                this.io = new Server(this.server, {
+                    cors: {
+                        origin: "*",
+                        methods: ["GET", "POST"]
+                    },
+                    transports: ['websocket', 'polling']
+                });
 
-            // Configurar eventos
-            this.setupEventHandlers();
+                // Configurar eventos
+                this.setupEvents();
 
-            // Iniciar servidor
-            this.server.listen(this.port, () => {
-                console.log(`[SERVER] WebSocket Server rodando na porta ${this.port}`);
-            });
+                // Iniciar servidor
+                this.server.listen(this.port, (err) => {
+                    if (err) {
+                        console.error('❌ Erro ao iniciar servidor WebSocket:', err);
+                        reject(err);
+                    } else {
+                        console.log(`🚀 Servidor WebSocket iniciado na porta ${this.port}`);
+                        this.isRunning = true;
+                        this.startTime = Date.now();
+                        resolve(true);
+                    }
+                });
 
-            return true;
-        } catch (error) {
-            console.error('[ERROR] Erro ao iniciar WebSocket Server:', error);
-            throw error;
-        }
+                // Tratar erros do servidor
+                this.server.on('error', (err) => {
+                    console.error('❌ Erro no servidor WebSocket:', err);
+                    reject(err);
+                });
+
+            } catch (error) {
+                console.error('❌ Erro ao inicializar servidor WebSocket:', error);
+                reject(error);
+            }
+        });
     }
 
     /**
-     * Configurar manipuladores de eventos
+     * Configurar eventos do Socket.IO
      */
-    setupEventHandlers() {
+    setupEvents() {
         this.io.on('connection', (socket) => {
-            console.log(`[CONNECTION] Usuário conectado: ${socket.id}`);
+            console.log(`🔗 Nova conexão: ${socket.id}`);
+            this.stats.connections++;
+            this.stats.totalConnections++;
 
-            // Evento de autenticação do usuário
-            socket.on('authenticate', (userData) => {
-                this.handleUserAuthentication(socket, userData);
+            // Eventos de autenticação
+            socket.on('authenticate', (data) => {
+                this.handleAuthentication(socket, data);
             });
 
-            // Eventos de agendamentos
-            socket.on('agendamento:created', (data) => {
-                this.broadcastAgendamentoUpdate('created', data);
+            // Eventos de agendamento
+            socket.on('agendamento:create', (data) => {
+                this.handleAgendamentoUpdate(socket, 'create', data);
             });
 
-            socket.on('agendamento:updated', (data) => {
-                this.broadcastAgendamentoUpdate('updated', data);
+            socket.on('agendamento:update', (data) => {
+                this.handleAgendamentoUpdate(socket, 'update', data);
             });
 
-            socket.on('agendamento:deleted', (data) => {
-                this.broadcastAgendamentoUpdate('deleted', data);
+            socket.on('agendamento:delete', (data) => {
+                this.handleAgendamentoUpdate(socket, 'delete', data);
             });
 
             socket.on('agendamento:shared', (data) => {
-                this.handleAgendamentoShare(data);
+                this.handleAgendamentoShared(socket, data);
             });
 
-            // Eventos de notificações
+            // Eventos de notificação
             socket.on('notification:send', (data) => {
-                this.sendNotificationToUser(data);
+                this.handleNotificationSend(socket, data);
             });
 
             socket.on('notification:read', (data) => {
-                this.markNotificationAsRead(data);
+                this.handleNotificationRead(socket, data);
             });
 
             // Eventos de sincronização
@@ -90,48 +113,49 @@ class WebSocketServer {
                 this.handleSyncRequest(socket);
             });
 
-            // Evento de busca em tempo real
+            // Eventos de busca
             socket.on('search:query', (data) => {
                 this.handleSearchQuery(socket, data);
             });
 
-            // Evento de desconexão
-            socket.on('disconnect', () => {
-                this.handleUserDisconnection(socket);
-            });
-
-            // Evento de ping/pong para manter conexão
+            // Eventos de ping/pong
             socket.on('ping', () => {
                 socket.emit('pong');
+            });
+
+            // Evento de desconexão
+            socket.on('disconnect', (reason) => {
+                this.handleDisconnection(socket, reason);
             });
         });
     }
 
     /**
-     * Autenticar usuário
+     * Manipular autenticação de usuário
      */
-    handleUserAuthentication(socket, userData) {
+    handleAuthentication(socket, data) {
         try {
-            const { userId, userName, displayName } = userData;
+            const { userId, userName, displayName } = data;
             
             // Armazenar dados do usuário
+            socket.userId = userId;
+            socket.userName = userName;
+            socket.displayName = displayName;
+            
+            // Adicionar à lista de usuários conectados
             this.connectedUsers.set(socket.id, {
                 userId,
                 userName,
                 displayName,
                 socketId: socket.id,
-                connectedAt: new Date(),
-                lastActivity: new Date()
+                connectedAt: new Date()
             });
-
-            // Entrar na sala do usuário
-            socket.join(`user_${userId}`);
 
             // Confirmar autenticação
             socket.emit('authenticated', {
                 success: true,
                 userId,
-                connectedUsers: this.getConnectedUsersList()
+                connectedUsers: Array.from(this.connectedUsers.values())
             });
 
             // Notificar outros usuários sobre nova conexão
@@ -141,181 +165,210 @@ class WebSocketServer {
                 displayName
             });
 
-            console.log(`[AUTH] Usuário autenticado: ${displayName} (${userId})`);
+            console.log(`✅ Usuário autenticado: ${displayName} (${userId})`);
+            this.stats.messagesReceived++;
+            this.stats.messagesSent++;
         } catch (error) {
-            console.error('[ERROR] Erro na autenticação:', error);
+            console.error('❌ Erro na autenticação:', error);
+            socket.emit('authentication:error', {
+                message: 'Erro interno do servidor'
+            });
         }
     }
 
     /**
-     * Transmitir atualização de agendamento
+     * Manipular atualização de agendamento
      */
-    broadcastAgendamentoUpdate(data) {
+    handleAgendamentoUpdate(socket, action, data) {
         try {
-            // Transmitir para todos os usuários conectados
-            this.io.emit('agendamento:update', data);
-            
-            console.log(`[BROADCAST] Agendamento ${action}:`, data.agendamento?.id || 'N/A');
+            const updateData = {
+                action,
+                agendamento: data.agendamento,
+                userId: socket.userId,
+                userName: socket.userName,
+                displayName: socket.displayName,
+                timestamp: new Date()
+            };
+
+            // Enviar para todos os outros usuários conectados
+            socket.broadcast.emit('agendamento:update', updateData);
+
+            console.log(`📅 Agendamento ${action} por ${socket.displayName}`);
+            this.stats.messagesReceived++;
+            this.stats.messagesSent += this.stats.connections - 1;
         } catch (error) {
-            console.error('[ERROR] Erro ao transmitir atualização de agendamento:', error);
+            console.error('❌ Erro ao processar atualização de agendamento:', error);
         }
     }
 
     /**
-     * Compartilhar agendamento entre usuários
+     * Manipular compartilhamento de agendamento
      */
-    shareAgendamento(fromUserId, toUserId, agendamento) {
+    handleAgendamentoShared(socket, data) {
         try {
-            const fromUser = this.connectedUsers.get(fromUserId);
-            const toUserSocket = this.getUserSocket(toUserId);
+            const { toUserId, agendamento, fromUser, message } = data;
+
+            // Encontrar socket do usuário destinatário
+            const targetSocket = this.findSocketByUserId(toUserId);
             
-            if (fromUser && toUserSocket) {
-                toUserSocket.emit('agendamento:shared', {
+            if (targetSocket) {
+                targetSocket.emit('agendamento:shared', {
                     agendamento,
                     fromUser: {
-                        id: fromUserId,
-                        displayName: fromUser.displayName
-                    }
+                        userId: socket.userId,
+                        userName: socket.userName,
+                        displayName: socket.displayName
+                    },
+                    message
                 });
-                
-                console.log(`[SHARE] Agendamento compartilhado de ${fromUser.displayName} para usuário ${toUserId}`);
+
+                console.log(`📤 Agendamento compartilhado de ${socket.displayName} para usuário ${toUserId}`);
+                this.stats.messagesReceived++;
+                this.stats.messagesSent++;
+            } else {
+                console.warn(`⚠️ Usuário ${toUserId} não encontrado para compartilhamento`);
             }
         } catch (error) {
-            console.error('[ERROR] Erro ao compartilhar agendamento:', error);
+            console.error('❌ Erro ao compartilhar agendamento:', error);
         }
     }
 
     /**
-     * Enviar notificação para usuário específico
+     * Manipular envio de notificação
      */
-    sendNotification(toUserId, notification) {
+    handleNotificationSend(socket, data) {
         try {
-            const toUserSocket = this.getUserSocket(toUserId);
+            const { toUserId, notification } = data;
+
+            // Encontrar socket do usuário destinatário
+            const targetSocket = this.findSocketByUserId(toUserId);
             
-            if (toUserSocket) {
-                toUserSocket.emit('notification:received', notification);
-                console.log(`[NOTIFICATION] Notificação enviada para usuário ${toUserId}`);
+            if (targetSocket) {
+                targetSocket.emit('notification:received', {
+                    notification,
+                    fromUser: {
+                        userId: socket.userId,
+                        userName: socket.userName,
+                        displayName: socket.displayName
+                    },
+                    timestamp: new Date()
+                });
+
+                console.log(`🔔 Notificação enviada de ${socket.displayName} para usuário ${toUserId}`);
+                this.stats.messagesReceived++;
+                this.stats.messagesSent++;
+            } else {
+                console.warn(`⚠️ Usuário ${toUserId} não encontrado para notificação`);
             }
         } catch (error) {
-            console.error('[ERROR] Erro ao enviar notificação:', error);
+            console.error('❌ Erro ao enviar notificação:', error);
         }
     }
 
     /**
-     * Marcar notificação como lida
+     * Manipular marcação de notificação como lida
      */
-    markNotificationAsRead(userId, notificationId) {
+    handleNotificationRead(socket, data) {
         try {
-            // Aqui você pode implementar a lógica para marcar como lida no banco de dados
-            // Por enquanto, apenas transmitir para outros usuários
-            this.io.emit('notification:read', {
-                userId,
-                notificationId
+            const { notificationId } = data;
+
+            // Broadcast para outros clientes do mesmo usuário
+            socket.broadcast.emit('notification:read', {
+                notificationId,
+                userId: socket.userId
             });
-            
-            console.log(`[NOTIFICATION] Notificação ${notificationId} marcada como lida`);
+
+            console.log(`✅ Notificação ${notificationId} marcada como lida por ${socket.displayName}`);
+            this.stats.messagesReceived++;
         } catch (error) {
-            console.error('[ERROR] Erro ao marcar notificação como lida:', error);
+            console.error('❌ Erro ao marcar notificação como lida:', error);
         }
     }
 
     /**
-     * Sincronizar dados entre usuários
+     * Manipular solicitação de sincronização
      */
-    syncData(userData, data) {
+    handleSyncRequest(socket) {
         try {
-            // Transmitir dados sincronizados para todos os usuários
-            this.io.emit('data:sync', {
-                fromUser: userData,
-                data: data,
-                timestamp: new Date().toISOString()
-            });
-            
-            console.log(`[SYNC] Sincronização solicitada por ${userData.displayName}`);
+            // Simular dados de sincronização
+            const syncData = {
+                timestamp: new Date(),
+                connectedUsers: Array.from(this.connectedUsers.values()),
+                serverStats: this.getStats()
+            };
+
+            socket.emit('sync:response', syncData);
+
+            console.log(`🔄 Sincronização solicitada por ${socket.displayName}`);
+            this.stats.messagesReceived++;
+            this.stats.messagesSent++;
         } catch (error) {
-            console.error('[ERROR] Erro na sincronização:', error);
+            console.error('❌ Erro na sincronização:', error);
         }
     }
 
     /**
-     * Realizar busca e transmitir resultados
+     * Manipular consulta de busca
      */
-    performSearch(userData, query, filters = {}) {
+    handleSearchQuery(socket, data) {
         try {
-            // Aqui você implementaria a lógica de busca
-            // Por enquanto, apenas transmitir a consulta
-            this.io.emit('search:results', {
+            const { query, filters } = data;
+
+            // Simular resultados de busca
+            const results = {
                 query,
                 filters,
-                results: [], // Implementar lógica de busca aqui
-                fromUser: userData
-            });
-            
-            console.log(`[SEARCH] Busca realizada por ${userData.displayName}: "${query}"`);
+                results: [],
+                timestamp: new Date()
+            };
+
+            socket.emit('search:results', results);
+
+            console.log(`🔍 Busca realizada por ${socket.displayName}: "${query}"`);
+            this.stats.messagesReceived++;
+            this.stats.messagesSent++;
         } catch (error) {
-            console.error('[ERROR] Erro na busca:', error);
+            console.error('❌ Erro na busca:', error);
         }
     }
 
     /**
-     * Manipular desconexão de usuário
+     * Manipular desconexão
      */
-    handleUserDisconnect(socket) {
+    handleDisconnection(socket, reason) {
         try {
-            const userData = this.connectedUsers.get(socket.userId);
+            const user = this.connectedUsers.get(socket.id);
             
-            if (userData) {
-                // Remover usuário da lista de conectados
-                this.connectedUsers.delete(socket.userId);
-                
-                // Notificar outros usuários sobre a desconexão
+            if (user) {
+                // Remover da lista de usuários conectados
+                this.connectedUsers.delete(socket.id);
+
+                // Notificar outros usuários sobre desconexão
                 socket.broadcast.emit('user:disconnected', {
-                    id: socket.userId,
-                    displayName: userData.displayName
+                    userId: user.userId,
+                    userName: user.userName,
+                    displayName: user.displayName
                 });
-                
-                console.log(`[DISCONNECT] Usuário desconectado: ${userData.displayName}`);
+
+                console.log(`🔌 Usuário desconectado: ${user.displayName} (${reason})`);
             }
+
+            this.stats.connections--;
         } catch (error) {
-            console.error('[ERROR] Erro na desconexão:', error);
+            console.error('❌ Erro ao processar desconexão:', error);
         }
     }
 
     /**
-     * Obter socket de usuário específico
+     * Encontrar socket por ID do usuário
      */
-    getUserSocket(userId) {
-        for (const [socketId, socket] of this.io.sockets.sockets) {
-            if (socket.userId === userId) {
-                return socket;
+    findSocketByUserId(userId) {
+        for (const [socketId, userData] of this.connectedUsers.entries()) {
+            if (userData.userId === userId) {
+                return this.io.sockets.sockets.get(socketId);
             }
         }
         return null;
-    }
-
-    /**
-     * Transmitir mensagem para todos os usuários
-     */
-    broadcast(event, data) {
-        try {
-            this.io.emit(event, data);
-        } catch (error) {
-            console.error('[ERROR] Erro no broadcast:', error);
-        }
-    }
-
-    /**
-     * Enviar mensagem para usuário específico
-     */
-    sendToUser(userId, event, data) {
-        try {
-            const userSocket = this.getUserSocket(userId);
-            if (userSocket) {
-                userSocket.emit(event, data);
-            }
-        } catch (error) {
-            console.error('[ERROR] Erro ao enviar para usuário:', error);
-        }
     }
 
     /**
@@ -323,12 +376,22 @@ class WebSocketServer {
      */
     stop() {
         try {
+            if (this.io) {
+                this.io.close();
+            }
+            
             if (this.server) {
                 this.server.close();
-                console.log('[SERVER] WebSocket Server parado');
             }
+
+            this.isRunning = false;
+            this.connectedUsers.clear();
+            
+            console.log('🛑 Servidor WebSocket parado');
+            return true;
         } catch (error) {
-            console.error('[ERROR] Erro ao parar servidor:', error);
+            console.error('❌ Erro ao parar servidor WebSocket:', error);
+            return false;
         }
     }
 
@@ -337,11 +400,18 @@ class WebSocketServer {
      */
     getStats() {
         return {
+            ...this.stats,
+            isRunning: this.isRunning,
             connectedUsers: this.connectedUsers.size,
-            uptime: process.uptime(),
-            memoryUsage: process.memoryUsage(),
-            timestamp: new Date()
+            uptime: this.isRunning ? Date.now() - this.startTime : 0
         };
+    }
+
+    /**
+     * Verificar se o servidor está rodando
+     */
+    isServerRunning() {
+        return this.isRunning;
     }
 }
 

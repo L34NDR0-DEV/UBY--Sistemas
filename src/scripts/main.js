@@ -202,8 +202,9 @@ function setupEventListeners() {
     
     if (testNotificationBtn) {
         testNotificationBtn.addEventListener('click', () => {
-            if (window.notificationSystem && window.notificationSystem.showNotificationsPanel) {
-                window.notificationSystem.showNotificationsPanel();
+            if (window.notificationSystem) {
+                // O sistema agora gerencia o toggle automaticamente
+                console.log('[INFO] Botão de notificações clicado');
             } else {
                 showToast('Sistema de notificações não disponível', 'error');
             }
@@ -409,6 +410,14 @@ async function handleCreateAgendamento(e) {
     e.preventDefault();
     
     const formData = new FormData(e.target);
+    const coordenadas = formData.get('linkCoordenadas') || document.getElementById('linkCoordenadas').value;
+    
+    // Validar formato das coordenadas
+    if (coordenadas && !/^-?\d+\.?\d*,-?\d+\.?\d*$/.test(coordenadas.trim())) {
+        showToast('Formato de coordenadas inválido. Use: latitude,longitude (ex: -23.5505,-46.6333)', 'error');
+        return;
+    }
+    
     const agendamento = {
         data: formData.get('data') || document.getElementById('data').value,
         horario: formData.get('horario') || document.getElementById('horario').value,
@@ -417,7 +426,7 @@ async function handleCreateAgendamento(e) {
         atendente: formData.get('atendente') || document.getElementById('atendente').value,
         status: formData.get('status') || document.getElementById('status').value,
         cidade: formData.get('cidade') || document.getElementById('cidade').value,
-        linkCoordenadas: formData.get('linkCoordenadas') || document.getElementById('linkCoordenadas').value,
+        linkCoordenadas: coordenadas.trim(),
         observacoes: formData.get('observacoes') || document.getElementById('observacoes').value,
         prioridade: calculatePriority(formData.get('data') || document.getElementById('data').value, formData.get('horario') || document.getElementById('horario').value)
     };
@@ -425,9 +434,17 @@ async function handleCreateAgendamento(e) {
     try {
         const result = await ipcRenderer.invoke('saveAgendamento', agendamento);
         if (result.success) {
+            // Salvar valor do atendente antes do reset
+            const atendenteValue = document.getElementById('atendente').value;
+            
             // Limpar formulário
             e.target.reset();
             document.getElementById('data').value = new Date().toISOString().split('T')[0];
+            
+            // Restaurar campo atendente
+            const atendenteInput = document.getElementById('atendente');
+            atendenteInput.value = atendenteValue;
+            atendenteInput.setAttribute('readonly', true);
             
             // Recarregar agendamentos
             await loadAgendamentos();
@@ -468,46 +485,7 @@ async function loadAgendamentos() {
         console.log('Agendamentos carregados:', agendamentos.length);
         console.log('Primeiros 3 agendamentos:', agendamentos.slice(0, 3).map(a => ({ id: a.id, data: a.data, nome: a.nomeCliente })));
         
-        // Se não houver agendamentos, criar alguns exemplos
-        if (agendamentos.length === 0) {
-            const exemploAgendamentos = [
-                {
-                    id: '1',
-                    data: new Date().toISOString().split('T')[0],
-                    horario: '09:00',
-                    nomeCliente: 'João Silva',
-                    numeroContato: '(11) 99999-9999',
-                    atendente: 'Nathan',
-                    status: 'Agendado',
-                    cidade: 'São Paulo',
-                    linkCoordenadas: 'https://maps.google.com/?q=-23.5505,-46.6333',
-                    observacoes: 'Cliente preferencial',
-                    prioridade: calculatePriority(new Date().toISOString().split('T')[0], '09:00'),
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: '2',
-                    data: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-                    horario: '14:30',
-                    nomeCliente: 'Maria Santos',
-                    numeroContato: '(11) 88888-8888',
-                    atendente: 'Bruno Antônio',
-                    status: 'Agendado',
-                    cidade: 'Rio de Janeiro',
-                    observacoes: 'Primeira visita',
-                    prioridade: calculatePriority(new Date(Date.now() + 86400000).toISOString().split('T')[0], '14:30'),
-                    createdAt: new Date().toISOString()
-                }
-            ];
-            
-            // Salvar exemplos
-            for (const agendamento of exemploAgendamentos) {
-                await ipcRenderer.invoke('saveAgendamento', agendamento);
-            }
-            
-            // Recarregar após salvar exemplos
-            agendamentos = await ipcRenderer.invoke('getAgendamentos');
-        }
+
         
         // Atualizar agendamentos globalmente para o sistema de lembretes
         window.agendamentos = agendamentos;
@@ -638,8 +616,6 @@ function createAgendamentoCard(agendamento) {
     console.log('Classes CSS aplicadas:', statusClass, postitStyle, shareClass);
     
     const formatDate = new Date(agendamento.data + 'T00:00:00').toLocaleDateString('pt-BR');
-    const today = new Date().toISOString().split('T')[0];
-    const isToday = agendamento.data === today;
     
     // Informações de compartilhamento - mostrar no final para aba concluídos
     const sharedInfo = agendamento.compartilhadoPor && currentTab !== 'concluidos' ? 
@@ -651,132 +627,81 @@ function createAgendamentoCard(agendamento) {
     
     // Justificativa de cancelamento
     const justificativa = agendamento.motivoCancelamento ? 
-        `<div class="postit-justificativa">
-            <strong>Motivo do Cancelamento:</strong>
-            ${agendamento.motivoCancelamento}
+        `<div class="postit-row postit-observacao">
+            <span class="icon"><i class="fa-solid fa-exclamation-triangle"></i></span>
+            <span><b>Motivo do Cancelamento:</b> ${agendamento.motivoCancelamento}</span>
         </div>` : '';
     
-    // Informações do usuário que fez a ação (para histórico) - REMOVIDO
-    let userActionInfo = '';
-    // Campos "Concluído por" e "Cancelado por" removidos conforme solicitado
+    // Observações como observação especial
+    const observacoes = agendamento.observacoes ? 
+        `<div class="postit-row postit-observacao">
+            <span class="icon"><i class="fa-solid fa-sticky-note"></i></span>
+            <span><b>Obs.:</b> ${agendamento.observacoes}</span>
+        </div>` : '';
     
     const cardHTML = `
         <div class="agendamento-card ${statusClass} ${postitStyle} ${shareClass}" data-id="${agendamento.id}" data-shared="${isShared}">
             ${sharedInfo}
-            <div class="card-header">
-                <div>
-                    <div class="card-title">${agendamento.nomeCliente}</div>
-                    <div class="card-time">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polyline points="12,6 12,12 16,14"></polyline>
-                        </svg>
-                        ${formatDate} às ${agendamento.horario}
-                    </div>
-                </div>
-                ${isToday ? `<div class="priority-badge ${agendamento.prioridade}">${agendamento.prioridade}</div>` : ''}
+            
+            <div class="cliente-destaque">
+                <span class="icon"><i class="fa-solid fa-user"></i></span>
+                <span class="cliente-nome">${agendamento.nomeCliente}</span>
             </div>
             
-            <div class="card-info">
-                <div class="info-item">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                    </svg>
-                    <span class="copyable-contact" onclick="copyToClipboard('${agendamento.numeroContato}')" title="Clique para copiar">${agendamento.numeroContato}</span>
+            <div class="postit-content">
+                <div class="postit-row">
+                    <span class="icon"><i class="fa-solid fa-calendar-day"></i></span>
+                    <span class="postit-label">Data:</span> <span class="postit-value">${formatDate}</span>
                 </div>
-                <div class="info-item">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                        <circle cx="12" cy="10" r="3"></circle>
-                    </svg>
-                    ${agendamento.cidade}
+                <div class="postit-row">
+                    <span class="icon"><i class="fa-solid fa-clock"></i></span>
+                    <span class="postit-label">Hora:</span> <span class="postit-value">${agendamento.horario}</span>
                 </div>
-                ${agendamento.linkCoordenadas ? `
-                    <div class="info-item">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                        </svg>
-                        <span class="coordinate-link" onclick="openLocationModal('${agendamento.linkCoordenadas}')">
-                            Ver Localização
-                        </span>
-                    </div>
-                ` : ''}
-                <div class="info-item">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="9,11 12,14 22,4"></polyline>
-                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                    </svg>
-                    ${agendamento.status}
+                <div class="postit-row">
+                    <span class="icon"><i class="fa-solid fa-phone"></i></span>
+                    <span class="postit-label">Telefone:</span>
+                    <span class="postit-value copyable-contact" onclick="copyToClipboard('${agendamento.numeroContato}')" title="Clique para copiar">${agendamento.numeroContato}</span>
+                    <button class="copy-btn" onclick="copyToClipboard('${agendamento.numeroContato}')" title="Copiar"><i class="fa-solid fa-copy"></i></button>
                 </div>
-                <div class="info-item">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="8.5" cy="7" r="4"></circle>
-                        <line x1="20" y1="8" x2="20" y2="14"></line>
-                        <line x1="23" y1="11" x2="17" y2="11"></line>
-                    </svg>
-                    ${agendamento.atendente}
+                <div class="postit-row">
+                    <span class="icon"><i class="fa-solid fa-location-dot"></i></span>
+                    <span class="postit-label">Cidade:</span> <span class="postit-value">${agendamento.cidade}</span>
                 </div>
-                ${agendamento.observacoes ? `
-                    <div class="info-item">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14,2 14,8 20,8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                        </svg>
-                        ${agendamento.observacoes}
-                    </div>
-                ` : ''}
+                <div class="postit-row">
+                    <span class="icon"><i class="fa-solid fa-taxi"></i></span>
+                    <span class="postit-label">Status:</span> <span class="postit-status">${agendamento.status}</span>
+                </div>
+                <div class="postit-row">
+                    <span class="icon"><i class="fa-solid fa-headset"></i></span>
+                    <span class="postit-label">Atendente:</span> <span class="postit-value">${agendamento.atendente}</span>
+                </div>
+                ${observacoes}
+                ${justificativa}
             </div>
             
-            ${justificativa}
-            ${userActionInfo}
-            
-            <div class="card-actions">
+            <div class="postit-footer">
                 ${agendamento.status !== 'Concluído' && agendamento.status !== 'Cancelado' ? `
-                    <button class="action-btn concluir" onclick="concluirAgendamento('${agendamento.id}')" title="Marcar como concluído">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="9,11 12,14 22,4"></polyline>
-                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                        </svg>
-                        Concluir
+                    <button class="postit-btn concluir-btn" onclick="concluirAgendamento('${agendamento.id}')" title="Marcar como concluído">
+                        <i class="fa-solid fa-check-circle"></i> Concluir
                     </button>
-                    <button class="action-btn cancelar" onclick="openCancelModal('${agendamento.id}')" title="Cancelar agendamento">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="15" y1="9" x2="9" y2="15"></line>
-                            <line x1="9" y1="9" x2="15" y2="15"></line>
-                        </svg>
-                        Cancelar
+                    <button class="postit-btn cancelar-btn" onclick="openCancelModal('${agendamento.id}')" title="Cancelar agendamento">
+                        <i class="fa-solid fa-times-circle"></i> Cancelar
                     </button>
-                    <button class="action-btn editar" onclick="openEditModal('${agendamento.id}')" title="Editar agendamento">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
-                        Editar
+                    <button class="postit-btn editar-btn" onclick="openEditModal('${agendamento.id}')" title="Editar agendamento">
+                        <i class="fa-solid fa-edit"></i> Editar
                     </button>
                 ` : ''}
-                <button class="action-btn compartilhar" onclick="openShareModal('${agendamento.id}')" title="Compartilhar agendamento">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="18" cy="5" r="3"></circle>
-                        <circle cx="6" cy="12" r="3"></circle>
-                        <circle cx="18" cy="19" r="3"></circle>
-                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-                    </svg>
-                    Compartilhar
+                <button class="postit-btn compartilhar-btn" onclick="openShareModal('${agendamento.id}')" title="Compartilhar agendamento">
+                    <i class="fa-solid fa-share-alt"></i> Compartilhar
                 </button>
                 ${agendamento.linkCoordenadas ? `
-                    <button class="action-btn" onclick="window.open('${agendamento.linkCoordenadas}', '_blank')" style="background: #2ecc71;" title="Abrir localização no mapa">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                            <circle cx="12" cy="10" r="3"></circle>
-                        </svg>
-                        Localização
+                    <button class="postit-btn localizacao-btn" onclick="openLocationModal('${agendamento.linkCoordenadas}')" title="Ver localização no mapa">
+                        <i class="fa-solid fa-map-marker-alt"></i> Localização
                     </button>
                 ` : ''}
+                <button class="postit-btn delete-btn" onclick="deleteAgendamento('${agendamento.id}')" title="Excluir agendamento permanentemente">
+                    <i class="fa-solid fa-trash-alt"></i> Excluir
+                </button>
             </div>
             ${sharedInfoBottom}
         </div>
@@ -825,6 +750,75 @@ async function concluirAgendamento(id) {
     }
 }
 
+// Função para excluir agendamento permanentemente
+async function deleteAgendamento(id) {
+    try {
+        const result = await Swal.fire({
+            title: '<i class="fa-solid fa-trash-can"></i> Excluir Agendamento',
+            text: 'Tem certeza que deseja excluir este agendamento permanentemente? Esta ação não pode ser desfeita.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fa-solid fa-trash-can"></i> Sim, excluir',
+            cancelButtonText: '<i class="fa-solid fa-xmark"></i> Cancelar',
+            background: '#ffffff',
+            customClass: {
+                popup: 'swal-popup-modern',
+                title: 'swal-title-modern',
+                content: 'swal-content-modern',
+                confirmButton: 'swal-confirm-modern',
+                cancelButton: 'swal-cancel-modern'
+            }
+        });
+
+        if (result.isConfirmed) {
+            // Excluir do banco de dados
+            await ipcRenderer.invoke('deletePostItPermanently', id);
+            
+            // Remover da interface
+            const cardElement = document.querySelector(`[data-id="${id}"]`);
+            if (cardElement) {
+                cardElement.style.transform = 'scale(0.8)';
+                cardElement.style.opacity = '0';
+                setTimeout(() => {
+                    cardElement.remove();
+                    updateAgendamentosCount();
+                }, 300);
+            }
+
+            // Mostrar confirmação
+            await Swal.fire({
+                title: '<i class="fa-solid fa-check-circle"></i> Excluído!',
+                text: 'O agendamento foi excluído permanentemente.',
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false,
+                background: '#ffffff',
+                customClass: {
+                    popup: 'swal-popup-modern',
+                    title: 'swal-title-modern'
+                }
+            });
+
+            // Atualizar a lista
+            await loadAgendamentos();
+        }
+    } catch (error) {
+        console.error('Erro ao excluir agendamento:', error);
+        await Swal.fire({
+            title: '<i class="fa-solid fa-circle-exclamation"></i> Erro',
+            text: 'Erro ao excluir o agendamento. Tente novamente.',
+            icon: 'error',
+            background: '#ffffff',
+            customClass: {
+                popup: 'swal-popup-modern',
+                title: 'swal-title-modern'
+            }
+        });
+    }
+}
+
 // Abrir modal de edição
 function openEditModal(id) {
     const agendamento = agendamentos.find(a => a.id === id);
@@ -866,6 +860,14 @@ async function handleEditAgendamento(e) {
     console.log('Editing agendamento:', editingAgendamento);
     
     try {
+        const coordenadas = document.getElementById('editLinkCoordenadas').value || '';
+        
+        // Validar formato das coordenadas
+        if (coordenadas && !/^-?\d+\.?\d*,-?\d+\.?\d*$/.test(coordenadas.trim())) {
+            showToast('Formato de coordenadas inválido. Use: latitude,longitude (ex: -23.5505,-46.6333)', 'error');
+            return;
+        }
+        
         const updatedData = {
             id: editingAgendamento.id,
             data: document.getElementById('editData').value,
@@ -875,7 +877,7 @@ async function handleEditAgendamento(e) {
             atendente: document.getElementById('editAtendente').value,
             status: document.getElementById('editStatus').value,
             cidade: document.getElementById('editCidade').value,
-            linkCoordenadas: document.getElementById('editLinkCoordenadas').value || '',
+            linkCoordenadas: coordenadas.trim(),
             observacoes: document.getElementById('editObservacoes').value || '',
             prioridade: calculatePriority(document.getElementById('editData').value, document.getElementById('editHorario').value),
             // Preservar dados originais importantes
@@ -1034,16 +1036,37 @@ let map = null;
 let currentMapCoordinates = null;
 
 function openLocationModal(coordinates) {
+    console.log('=== INÍCIO openLocationModal ===');
+    console.log('Coordenadas recebidas:', coordinates);
+
+    // Verificar se as coordenadas estão presentes
+    if (!coordinates || typeof coordinates !== 'string') {
+        showToast('Coordenadas não fornecidas', 'error');
+        return;
+    }
+
+    // Parsear coordenadas (formato: "lat,lng" ou "lat, lng")
+    const [lat, lng] = coordinates.split(',').map(coord => parseFloat(coord.trim()));
+    if (isNaN(lat) || isNaN(lng)) {
+        showToast('Coordenadas inválidas', 'error');
+        return;
+    }
+
     const modal = document.getElementById('locationModal');
     const coordinatesSpan = document.getElementById('currentCoordinates');
-    
-    coordinatesSpan.textContent = coordinates;
+    if (!modal || !coordinatesSpan) {
+        showToast('Erro ao abrir o modal de localização', 'error');
+        return;
+    }
+
+    coordinatesSpan.textContent = `${lat},${lng}`;
     modal.style.display = 'block';
-    
-    // Aguardar um pouco para o modal aparecer antes de inicializar o mapa
+
     setTimeout(() => {
-        initializeMap(coordinates);
+        initializeMap(`${lat},${lng}`);
     }, 100);
+
+    console.log('=== FIM openLocationModal ===');
 }
 
 function closeLocationModal() {
@@ -1059,70 +1082,119 @@ function closeLocationModal() {
 }
 
 function initializeMap(coordinates) {
+    console.log('=== INÍCIO initializeMap ===');
+    console.log('Coordenadas recebidas:', coordinates);
+    
+    // Verificar se o Leaflet está disponível
+    if (typeof L === 'undefined') {
+        console.error('Leaflet não está carregado');
+        showToast('Erro: Biblioteca de mapa não carregada', 'error');
+        return;
+    }
+    
     // Destruir mapa existente se houver
     if (map) {
+        console.log('Destruindo mapa existente...');
         map.remove();
+        map = null;
     }
     
     // Parsear coordenadas (formato: "lat,lng" ou "lat, lng")
     const [lat, lng] = coordinates.split(',').map(coord => parseFloat(coord.trim()));
+    console.log('Coordenadas parseadas:', { lat, lng });
     
     if (isNaN(lat) || isNaN(lng)) {
+        console.error('Coordenadas inválidas após parsing');
         showToast('Coordenadas inválidas', 'error');
         return;
     }
     
     currentMapCoordinates = [lat, lng];
+    console.log('Coordenadas atuais definidas:', currentMapCoordinates);
     
-    // Inicializar mapa
-    map = L.map('map', {
-        zoomControl: false, // Remover controles padrão
-        attributionControl: false // Remover atribuição padrão
-    }).setView([lat, lng], 15);
+    // Verificar se o elemento do mapa existe
+    const mapElement = document.getElementById('map');
+    if (!mapElement) {
+        console.error('Elemento do mapa não encontrado');
+        showToast('Erro: Elemento do mapa não encontrado', 'error');
+        return;
+    }
     
-    // Adicionar camada do OpenStreetMap
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-    
-    // Criar ícone personalizado para o marcador
-    const customIcon = L.divIcon({
-        className: 'custom-marker',
-        html: `
-            <div style="
-                background: #FF6B00;
-                width: 30px;
-                height: 30px;
-                border-radius: 50% 50% 50% 0;
-                transform: rotate(-45deg);
-                border: 3px solid white;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            ">
+    try {
+        // Inicializar mapa
+        console.log('Inicializando mapa Leaflet...');
+        map = L.map('map', {
+            zoomControl: false, // Remover controles padrão
+            attributionControl: false // Remover atribuição padrão
+        }).setView([lat, lng], 15);
+        
+        console.log('Mapa inicializado com sucesso');
+        
+        // Adicionar camada do OpenStreetMap
+        console.log('Adicionando camada do OpenStreetMap...');
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        console.log('Camada do OpenStreetMap adicionada');
+        
+        // Criar ícone personalizado para o marcador
+        const customIcon = L.divIcon({
+            className: 'custom-marker',
+            html: `
                 <div style="
-                    color: white;
-                    font-size: 12px;
-                    font-weight: bold;
-                    transform: rotate(45deg);
-                ">📍</div>
-            </div>
-        `,
-        iconSize: [30, 30],
-        iconAnchor: [15, 30]
-    });
-    
-    // Adicionar marcador personalizado
-    L.marker([lat, lng], { icon: customIcon })
-        .addTo(map)
-        .bindPopup(`
-            <div style="text-align: center; padding: 5px;">
-                <strong>📍 Localização do Agendamento</strong><br>
-                <small>Lat: ${lat.toFixed(6)}<br>Lng: ${lng.toFixed(6)}</small>
-            </div>
-        `)
-        .openPopup();
+                    background: #FF6B00;
+                    width: 30px;
+                    height: 30px;
+                    border-radius: 50% 50% 50% 0;
+                    transform: rotate(-45deg);
+                    border: 3px solid white;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                ">
+                    <div style="
+                        color: white;
+                        font-size: 12px;
+                        font-weight: bold;
+                        transform: rotate(45deg);
+                    ">📍</div>
+                </div>
+            `,
+            iconSize: [30, 30],
+            iconAnchor: [15, 30]
+        });
+        
+        console.log('Ícone personalizado criado');
+        
+        // Adicionar marcador personalizado
+        const marker = L.marker([lat, lng], { icon: customIcon })
+            .addTo(map)
+            .bindPopup(`
+                <div style="text-align: center; padding: 5px;">
+                    <strong>📍 Localização do Agendamento</strong><br>
+                    <small>Lat: ${lat.toFixed(6)}<br>Lng: ${lng.toFixed(6)}</small>
+                </div>
+            `)
+            .openPopup();
+        
+        console.log('Marcador adicionado e popup aberto');
+        
+        // Forçar redimensionamento do mapa
+        setTimeout(() => {
+            if (map) {
+                map.invalidateSize();
+                console.log('Mapa redimensionado');
+            }
+        }, 200);
+        
+        console.log('=== FIM initializeMap (SUCESSO) ===');
+        
+    } catch (error) {
+        console.error('Erro ao inicializar mapa:', error);
+        showToast('Erro ao carregar o mapa: ' + error.message, 'error');
+    }
 }
 
 function openInGoogleMaps() {
@@ -1301,59 +1373,6 @@ function setupSearchEventListeners() {
     if (clearFiltersBtn) {
         clearFiltersBtn.addEventListener('click', () => {
             clearAdvancedFilters();
-        });
-    }
-
-
-
-    // Nova Lixeira - Apagar todos os agendamentos
-    const trashBtn = document.getElementById('trashBtn');
-    if (trashBtn) {
-        trashBtn.addEventListener('click', async () => {
-            try {
-                // Verificar se há agendamentos para deletar
-                if (!agendamentos || agendamentos.length === 0) {
-                    showToast('Nenhum agendamento encontrado para deletar', 'info');
-                    return;
-                }
-
-                // Confirmação do usuário
-                const confirmacao = confirm(`Tem certeza que deseja apagar TODOS os ${agendamentos.length} agendamentos?\n\nEsta ação não pode ser desfeita!`);
-                if (!confirmacao) {
-                    return;
-                }
-
-                // Adicionar estado de processamento
-                trashBtn.classList.add('processing');
-                trashBtn.disabled = true;
-
-                // Apagar todos os agendamentos
-                agendamentos = [];
-                filteredAgendamentos = [];
-                
-                // Limpar localStorage
-                localStorage.removeItem('agendamentos');
-                
-                // Atualizar interface
-                await loadAgendamentos();
-                
-                // Mostrar mensagem de sucesso
-                showToast(`Todos os ${agendamentos.length} agendamentos foram apagados com sucesso!`, 'success');
-                
-                // Adicionar efeito visual de sucesso
-                trashBtn.style.background = 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)';
-                setTimeout(() => {
-                    trashBtn.style.background = '';
-                }, 2000);
-
-            } catch (error) {
-                console.error('Erro ao apagar agendamentos:', error);
-                showToast(`Erro ao apagar agendamentos: ${error.message}`, 'error');
-            } finally {
-                // Remover estado de processamento
-                trashBtn.classList.remove('processing');
-                trashBtn.disabled = false;
-            }
         });
     }
 
@@ -2322,8 +2341,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Configurar event listeners da busca
     setupSearchEventListeners();
     
-    // Inicializar sistema de notificações
-    if (window.NotificationSystem) {
+    // Inicializar sistema de notificações se ainda não foi inicializado
+    if (!window.notificationSystem && window.NotificationSystem) {
         window.notificationSystem = new window.NotificationSystem();
         console.log('[SUCCESS] Sistema de notificações inicializado');
         
@@ -2370,6 +2389,10 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         
         console.log('[INFO] Para testar as notificações, digite: testNotification() no console');
+    } else if (window.notificationSystem) {
+        console.log('[INFO] Sistema de notificações já inicializado');
+    } else {
+        console.warn('[WARNING] NotificationSystem não encontrado');
     }
     
     // Inicializar WebSocket após um pequeno delay
@@ -2377,81 +2400,3 @@ document.addEventListener('DOMContentLoaded', function() {
         initializeWebSocket();
     }, 2000);
 });
-
-// Funções extras para o sistema da lixeira
-function showTrashStats() {
-    const cleaner = window.dataCleaner;
-    if (!cleaner) {
-        showToast('❌ Sistema de lixeira não disponível', 'error');
-        return;
-    }
-
-    const stats = cleaner.getDataStats();
-    if (!stats) {
-        showToast('❌ Erro ao obter estatísticas', 'error');
-        return;
-    }
-
-    const message = `
-📊 Estatísticas da Lixeira:
-
-🗂️ Agendamentos: ${stats.totalAgendamentos}
-📱 Notificações: ${stats.totalNotifications}
-📅 Antigos (30+ dias): ${stats.agendamentosAntigos}
-✅ Concluídos: ${stats.agendamentosConcluidos}
-❌ Cancelados: ${stats.agendamentosCancelados}
-💾 Tamanho: ${Math.round(stats.storageSize / 1024)} KB
-🔄 Último backup: ${stats.lastBackup ? new Date(parseInt(stats.lastBackup)).toLocaleString('pt-BR') : 'Nunca'}
-    `.trim();
-
-    showToast(message, 'info');
-}
-
-function configureTrashSystem() {
-    const cleaner = window.dataCleaner;
-    if (!cleaner) {
-        showToast('❌ Sistema de lixeira não disponível', 'error');
-        return;
-    }
-
-    const enableBackup = confirm('Deseja habilitar backup automático antes da limpeza?');
-    const requireConfirmation = confirm('Deseja que a lixeira peça confirmação antes de deletar?');
-    
-    cleaner.configure({
-        backupEnabled: enableBackup,
-        confirmationRequired: requireConfirmation,
-        maxBackups: 5
-    });
-
-    showToast('⚙️ Configurações da lixeira atualizadas', 'success');
-}
-
-function restoreFromBackup() {
-    const cleaner = window.dataCleaner;
-    if (!cleaner) {
-        showToast('❌ Sistema de lixeira não disponível', 'error');
-        return;
-    }
-
-    const confirmed = confirm('Deseja restaurar os dados do último backup?\n\nEsta ação irá substituir os dados atuais.');
-    if (!confirmed) {
-        return;
-    }
-
-    const result = cleaner.restoreFromBackup();
-    if (result.success) {
-        showToast('✅ Dados restaurados com sucesso', 'success');
-    } else {
-        showToast(`❌ Erro ao restaurar: ${result.error}`, 'error');
-    }
-}
-
-// Adicionar funções globais para acesso via console
-window.showTrashStats = showTrashStats;
-window.configureTrashSystem = configureTrashSystem;
-window.restoreFromBackup = restoreFromBackup;
-
-console.log('🗑️ Funções da lixeira carregadas. Use:');
-console.log('- showTrashStats() - Ver estatísticas');
-console.log('- configureTrashSystem() - Configurar lixeira');
-console.log('- restoreFromBackup() - Restaurar do backup');

@@ -1,47 +1,28 @@
-/**
- * Estilos para ícones SVG profissionais
- * Substitui emojis por ícones vetoriais com aparência profissional
- */
-
+/* Estilos para ícones SVG */
 .icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    display: inline-block;
     width: 16px;
     height: 16px;
     margin-right: 4px;
     vertical-align: middle;
+    fill: currentColor;
 }
 
-.icon svg {
-    width: 100%;
-    height: 100%;
-    stroke: currentColor;
-    fill: none;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+/* Estados dos ícones */
+.icon.success {
+    color: #28a745;
 }
 
-/* Cores por tipo de ícone */
-.icon.success svg {
-    stroke: #10b981;
-    color: #10b981;
+.icon.error {
+    color: #dc3545;
 }
 
-.icon.error svg {
-    stroke: #ef4444;
-    color: #ef4444;
+.icon.warning {
+    color: #ffc107;
 }
 
-.icon.warning svg {
-    stroke: #f59e0b;
-    color: #f59e0b;
-}
-
-.icon.info svg {
-    stroke: #3b82f6;
-    color: #3b82f6;
+.icon.info {
+    color: #17a2b8;
 }
 
 .icon.sync svg {
@@ -149,25 +130,46 @@
     color: #6b7280;
 }
 
-/* Tamanhos de ícone */
-.icon.small {
+/* Tamanhos de ícone - Agora com mais opções */
+.icon.tiny {
     width: 12px;
     height: 12px;
 }
 
-.icon.medium {
+.icon.small {
     width: 16px;
     height: 16px;
 }
 
+.icon.medium {
+    width: 24px;  /* Tamanho padrão aumentado */
+    height: 24px;
+}
+
 .icon.large {
-    width: 20px;
-    height: 20px;
+    width: 32px;  /* Aumentado de 20px para 32px */
+    height: 32px;
 }
 
 .icon.xlarge {
-    width: 24px;
-    height: 24px;
+    width: 48px;  /* Aumentado de 24px para 48px */
+    height: 48px;
+}
+
+.icon.xxlarge {
+    width: 64px;  /* Novo tamanho para ícones muito grandes */
+    height: 64px;
+}
+
+/* Tamanhos especiais para barra de tarefas e área de trabalho */
+.icon.taskbar {
+    width: 32px;
+    height: 32px;
+}
+
+.icon.desktop {
+    width: 48px;
+    height: 48px;
 }
 
 /* Animações */
@@ -321,4 +323,4 @@
         width: 20px;
         height: 20px;
     }
-} 
+}

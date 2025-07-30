@@ -183,7 +183,7 @@ function createLoginWindow() {
       webSecurity: false,
       allowRunningInsecureContent: true
     },
-    icon: path.join(__dirname, '..', 'assets', 'logo.ico'),
+    icon: path.join(__dirname, '..', 'assets', 'logo-system.ico'),
     titleBarStyle: 'hidden',
     frame: false, // Remove os botões padrão do Electron
     show: false,
@@ -222,7 +222,7 @@ function createMainWindow() {
       webSecurity: false,
       allowRunningInsecureContent: true
     },
-    icon: path.join(__dirname, '..', 'assets', 'logo.ico'),
+    icon: path.join(__dirname, '..', 'assets', 'logo-system.ico'),
     titleBarStyle: 'hidden',
     frame: false, // Remove os botões padrão do Electron
     show: false,
@@ -640,11 +640,14 @@ autoUpdater.on('error', (err) => {
     'latest.yml in the latest release artifacts',
     'HttpError: 404',
     'ENOTFOUND',
-    'ECONNREFUSED'
+    'ECONNREFUSED',
+    'Network Error',
+    'timeout',
+    'ETIMEDOUT'
   ];
   
   const shouldIgnore = ignoredErrors.some(ignoredError => 
-    err.message && err.message.includes(ignoredError)
+    err.message && err.message.toLowerCase().includes(ignoredError.toLowerCase())
   );
   
   if (!shouldIgnore && mainWindow) {
@@ -652,6 +655,14 @@ autoUpdater.on('error', (err) => {
       message: 'Erro ao verificar atualizações. Tente novamente mais tarde.',
       details: err.message
     });
+  } else {
+    // Para erros ignorados, enviar mensagem de "sem atualização" em vez de erro
+    console.log('Erro ignorado (normal para desenvolvimento):', err.message);
+    if (mainWindow) {
+      mainWindow.webContents.send('update-not-available', { 
+        message: 'Nenhuma atualização disponível no momento' 
+      });
+    }
   }
 });
 
@@ -674,8 +685,18 @@ autoUpdater.on('update-downloaded', (info) => {
 // IPC handlers para o sistema de atualização
 ipcMain.on('check-for-updates', () => {
   console.log('Verificação de atualização solicitada pelo renderer');
+  
+  // Adicionar timeout para evitar que a verificação fique pendente
+  const timeout = setTimeout(() => {
+    console.log('Timeout na verificação de atualizações');
+    if (mainWindow) {
+      mainWindow.webContents.send('update-not-available', { message: 'Nenhuma atualização disponível no momento' });
+    }
+  }, 10000); // 10 segundos de timeout
+  
   // Verificar se há releases no GitHub antes de tentar atualizar
   autoUpdater.checkForUpdates().catch(err => {
+    clearTimeout(timeout);
     console.log('Erro ao verificar atualizações (normal se não há releases):', err.message);
     if (mainWindow) {
       mainWindow.webContents.send('update-not-available', { message: 'Nenhuma atualização disponível no momento' });
@@ -686,10 +707,23 @@ ipcMain.on('check-for-updates', () => {
 // Handler para verificação silenciosa de atualizações
 ipcMain.on('check-for-updates-quiet', () => {
   console.log('Verificação silenciosa de atualização solicitada pelo renderer');
+  
+  // Adicionar timeout para evitar que a verificação fique pendente
+  const timeout = setTimeout(() => {
+    console.log('Timeout na verificação silenciosa de atualizações');
+    if (mainWindow) {
+      mainWindow.webContents.send('update-not-available-silent');
+    }
+  }, 8000); // 8 segundos de timeout
+  
   // Verificar se há releases no GitHub sem mostrar mensagens de erro
   autoUpdater.checkForUpdates().catch(err => {
+    clearTimeout(timeout);
     console.log('Nenhuma atualização disponível (verificação silenciosa):', err.message);
-    // Não enviar mensagem para o renderer em verificação silenciosa
+    // Enviar resposta silenciosa para o renderer
+    if (mainWindow) {
+      mainWindow.webContents.send('update-not-available-silent');
+    }
   });
 });
 

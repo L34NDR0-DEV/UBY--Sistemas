@@ -1,6 +1,6 @@
 {
   "name": "uby-agendamentos",
-  "version": "6.0.0",
+  "version": "6.0.2",
   "description": "Sistema profissional de gestão de agendamentos desenvolvido com Electron",
   "main": "app/main.js",
   "author": "L34NDR0-DEV",
@@ -42,15 +42,15 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "assets/logo.png"
+      "icon": "src/assets/logo-256.png"
     },
     "mac": {
       "target": "dmg",
-      "icon": "assets/logo.png"
+      "icon": "src/assets/logo-256.png"
     },
     "linux": {
       "target": "AppImage",
-      "icon": "assets/logo.png"
+      "icon": "src/assets/logo-256.png"
     },
     "nsis": {
       "oneClick": false,

@@ -1,0 +1,210 @@
+[1mdiff --git a/app/main.js b/app/main.js[m
+[1mindex 4d1e91a..6037e98 100644[m
+[1m--- a/app/main.js[m
+[1m+++ b/app/main.js[m
+[36m@@ -718,17 +718,20 @@[m [mipcMain.handle('get-app-version', () => {[m
+ // Inicializar servidor WebSocket[m
+ async function initializeWebSocketServer() {[m
+   try {[m
+[31m-    console.log('🔄 Iniciando servidor WebSocket...');[m
+[31m-    wsServer = new WebSocketServer(3001);[m
+[32m+[m[32m    console.log('[INFO] Iniciando servidor WebSocket...');[m
+[32m+[m[32m    wsServer = new WebSocketServer(3002); // Porta inicial, mas será dinâmica[m
+     const started = await wsServer.start();[m
+     [m
+     if (started) {[m
+[31m-      console.log('[SUCCESS] Servidor WebSocket iniciado com sucesso na porta 3001');[m
+[32m+[m[32m      console.log(`[SUCCESS] Servidor WebSocket iniciado com sucesso na porta ${wsServer.port}`);[m
+[32m+[m[41m      [m
+[32m+[m[32m      // Salvar porta em variável global para uso posterior[m
+[32m+[m[32m      global.websocketPort = wsServer.port;[m
+     } else {[m
+       console.error('[ERROR] Falha ao iniciar servidor WebSocket');[m
+     }[m
+   } catch (error) {[m
+[31m-    console.error('❌ Erro ao inicializar servidor WebSocket:', error);[m
+[32m+[m[32m    console.error('[ERROR] Erro ao inicializar servidor WebSocket:', error);[m
+   }[m
+ }[m
+ [m
+[36m@@ -738,9 +741,9 @@[m [mfunction stopWebSocketServer() {[m
+     try {[m
+       wsServer.stop();[m
+       wsServer = null;[m
+[31m-      console.log('🛑 Servidor WebSocket parado');[m
+[32m+[m[32m      console.log('[STOP] Servidor WebSocket parado');[m
+     } catch (error) {[m
+[31m-      console.error('❌ Erro ao parar servidor WebSocket:', error);[m
+[32m+[m[32m      console.error('[ERROR] Erro ao parar servidor WebSocket:', error);[m
+     }[m
+   }[m
+ }[m
+[1mdiff --git a/assets/som.mp3 b/assets/som.mp3[m
+[1mnew file mode 100644[m
+[1mindex 0000000..5fbef44[m
+Binary files /dev/null and b/assets/som.mp3 differ
+[1mdiff --git a/data/app.db b/data/app.db[m
+[1mnew file mode 100644[m
+[1mindex 0000000..56d9706[m
+Binary files /dev/null and b/data/app.db differ
+[1mdiff --git a/docs/CHANGELOG-v1.0.7.md b/docs/CHANGELOG-v1.0.7.md[m
+[1mindex 040a7c5..3749625 100644[m
+[1m--- a/docs/CHANGELOG-v1.0.7.md[m
+[1m+++ b/docs/CHANGELOG-v1.0.7.md[m
+[36m@@ -1,5 +1,16 @@[m
+ # Changelog - Versão 1.0.7[m
+ [m
+[32m+[m[32m## Novas Funcionalidades[m
+[32m+[m
+[32m+[m[32m### 🔊 Som de Alerta para Atrasos[m
+[32m+[m[32m- **Funcionalidade**: Adicionado som de alerta (som.mp3) para notificações de atraso[m
+[32m+[m[32m- **Implementação**:[m[41m [m
+[32m+[m[32m  - Som toca antes da mensagem de voz para atrasos[m
+[32m+[m[32m  - Arquivo de som localizado em `assets/som.mp3`[m
+[32m+[m[32m  - Volume configurado para 70% para não ser muito alto[m
+[32m+[m[32m  - Delay de 500ms entre som e mensagem de voz[m
+[32m+[m[32m  - Aplicado apenas para agendamentos atrasados[m
+[32m+[m
+ ## Correções Implementadas[m
+ [m
+ ### 🔧 Função de Copiar Contato[m
+[36m@@ -34,6 +45,7 @@[m
+ [m
+ ## Arquivos Modificados[m
+ [m
+[32m+[m[32m- `src/scripts/tts.js` - Adicionado som de alerta para atrasos[m
+ - `src/scripts/main.js` - Correção da função copyToClipboard e handlers de atualização[m
+ - `src/styles/main.css` - Remoção da animação hover do contato[m
+ - `src/scripts/updater.js` - Lógica condicional do botão de atualização[m
+[1mdiff --git a/docs/ICONS_USAGE.md b/docs/ICONS_USAGE.md[m
+[1mnew file mode 100644[m
+[1mindex 0000000..360373f[m
+[1m--- /dev/null[m
+[1m+++ b/docs/ICONS_USAGE.md[m
+[36m@@ -0,0 +1,332 @@[m
+[32m+[m[32m# Ícones Profissionais - Guia de Uso[m
+[32m+[m
+[32m+[m[32m## Visão Geral[m
+[32m+[m
+[32m+[m[32mSubstituímos todos os emojis por ícones SVG profissionais que oferecem:[m
+[32m+[m[32m- **Aparência consistente** em todas as plataformas[m
+[32m+[m[32m- **Escalabilidade** perfeita em qualquer tamanho[m
+[32m+[m[32m- **Personalização** de cores e estilos[m
+[32m+[m[32m- **Acessibilidade** melhorada[m
+[32m+[m[32m- **Performance** otimizada[m
+[32m+[m
+[32m+[m[32m## Como Usar[m
+[32m+[m
+[32m+[m[32m### 1. **Incluir os Arquivos**[m
+[32m+[m
+[32m+[m[32m```html[m
+[32m+[m[32m<!-- Incluir o CSS dos ícones -->[m
+[32m+[m[32m<link rel="stylesheet" href="src/styles/icons.css">[m
+[32m+[m
+[32m+[m[32m<!-- Incluir o JavaScript dos ícones -->[m
+[32m+[m[32m<script src="src/assets/icons.js"></script>[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m### 2. **Usar Ícones Básicos**[m
+[32m+[m
+[32m+[m[32m```javascript[m
+[32m+[m[32m// Criar ícone simples[m
+[32m+[m[32mconst icon = createIconElement('SUCCESS', 'success');[m
+[32m+[m[32mdocument.body.appendChild(icon);[m
+[32m+[m
+[32m+[m[32m// Inserir ícone em elemento existente[m
+[32m+[m[32mconst button = document.querySelector('.btn');[m
+[32m+[m[32minsertIcon(button, 'SAVE', 'before');[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m### 3. **Ícones com Classes CSS**[m
+[32m+[m
+[32m+[m[32m```html[m
+[32m+[m[32m<!-- Ícone de sucesso -->[m
+[32m+[m[32m<div class="icon success">[m
+[32m+[m[32m    <svg>...</svg>[m
+[32m+[m[32m</div>[m
+[32m+[m
+[32m+[m[32m<!-- Ícone de erro -->[m
+[32m+[m[32m<div class="icon error">[m
+[32m+[m[32m    <svg>...</svg>[m
+[32m+[m[32m</div>[m
+[32m+[m
+[32m+[m[32m<!-- Ícone animado -->[m
+[32m+[m[32m<div class="icon sync animate">[m
+[32m+[m[32m    <svg>...</svg>[m
+[32m+[m[32m</div>[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m## Ícones Disponíveis[m
+[32m+[m
+[32m+[m[32m### **Status**[m
+[32m+[m[32m- `SUCCESS` - Operação bem-sucedida[m
+[32m+[m[32m- `ERROR` - Erro ou falha[m
+[32m+[m[32m- `WARNING` - Aviso ou alerta[m
+[32m+[m[32m- `INFO` - Informação geral[m
+[32m+[m
+[32m+[m[32m### **Ações**[m
+[32m+[m[32m- `SYNC` - Sincronização[m
+[32m+[m[32m- `CONNECT` - Conexão estabelecida[m
+[32m+[m[32m- `DISCONNECT` - Conexão perdida[m
+[32m+[m[32m- `SAVE` - Salvar dados[m
+[32m+[m[32m- `LOAD` - Carregar dados[m
+[32m+[m
+[32m+[m[32m### **Dados**[m
+[32m+[m[32m- `DATABASE` - Banco de dados[m
+[32m+[m[32m- `CACHE` - Cache local[m
+[32m+[m[32m- `CONFLICT` - Conflito detectado[m
+[32m+[m[32m- `RESOLVE` - Conflito resolvido[m
+[32m+[m
+[32m+[m[32m### **Interface**[m
+[32m+[m[32m- `APPOINTMENT` - Agendamento[m
+[32m+[m[32m- `NOTIFICATION` - Notificação[m
+[32m+[m[32m- `SHARE` - Compartilhamento[m
+[32m+[m[32m- `SEARCH` - Busca[m
+[32m+[m
+[32m+[m[32m### **Status de Sistema**[m
+[32m+[m[32m- `ONLINE` - Sistema online[m
+[32m+[m[32m- `OFFLINE` - Sistema offline[m
+[32m+[m[32m- `PENDING` - Operação pendente[m
+[32m+[m[32m- `CLEAN` - Limpeza[m
+[32m+[m
+[32m+[m[32m### **Ações de Sistema**[m
+[32m+[m[32m- `START` - Iniciar[m
+[32m+[m[32m- `STOP` - Parar[m
+[32m+[m[32m- `RESTART` - Reiniciar[m
+[32m+[m[32m- `CLOSE` - Fechar[m
+[32m+[m
+[32m+[m[32m## Classes CSS Disponíveis[m
+[32m+[m
+[32m+[m[32m### **Cores**[m
+[32m+[m[32m```css[m
+[32m+[m[32m.icon.success    /* Verde */[m
+[32m+[m[32m.icon.error      /* Vermelho */[m
+[32m+[m[32m.icon.warning    /* Amarelo */[m
+[32m+[m[32m.icon.info       /* Azul */[m
+[32m+[m[32m.icon.sync       /* Roxo */[m
+[32m+[m[32m.icon.connect    /* Verde */[m
+[32m+[m[32m.icon.disconnect /* Vermelho */[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m### **Tamanhos**[m
+[32m+[m[32m```css[m
+[32m+[m[32m.icon.small      /* 12px */[m
+[32m+[m[32m.icon.medium     /* 16px */[m
+[32m+[m[32m.icon.large      /* 20px */[m
+[32m+[m[32m.icon.xlarge     /* 24px */[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m### **Animações**[m
+[32m+[m[32m```css[m
+[32m+[m[32m.icon.animate    /* Pulsar */[m
+[32m+[m[32m.icon.spin       /* Girar */[m
+[32m+[m[32m.icon.bounce     /* Quicar */[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m## Exemplos Práticos[m
+[32m+[m
+[32m+[m[32m### **1. Log de Sistema**[m
+[32m+[m
+[32m+[m[32m```javascri

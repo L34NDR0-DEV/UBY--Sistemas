@@ -457,6 +457,35 @@ body {
     color: white;
 }
 
+.update-header-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.update-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+}
+
+.update-title h3 {
+    margin: 0 0 4px 0;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.update-title p {
+    margin: 0;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
 .update-header h3 {
     margin: 0;
     font-size: 20px;
@@ -490,6 +519,98 @@ body {
     max-height: 400px;
 }
 
+.version-comparison {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    gap: 16px;
+}
+
+.version-card {
+    flex: 1;
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.version-card.current {
+    border-color: #667eea;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e3f2fd 100%);
+}
+
+.version-card.new {
+    border-color: #4caf50;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e8f5e8 100%);
+}
+
+.version-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.version-card.new .version-icon {
+    background: rgba(76, 175, 80, 0.1);
+}
+
+.version-details h4 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.version-number {
+    font-size: 18px;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.version-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    opacity: 0.6;
+}
+
+.update-info {
+    margin-bottom: 24px;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.info-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    color: #667eea;
+}
+
+.info-item span {
+    font-size: 14px;
+    color: #495057;
+}
+
 .version-info {
     margin-bottom: 24px;
     background: #f8f9fa;
@@ -511,8 +632,26 @@ body {
     margin-bottom: 24px;
 }
 
+.notes-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.notes-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 8px;
+    color: #667eea;
+}
+
 .release-notes h4 {
-    margin: 0 0 16px 0;
+    margin: 0;
     color: #495057;
     font-size: 16px;
     font-weight: 600;
@@ -535,8 +674,52 @@ body {
     background: #f8f9fa;
 }
 
+.update-actions button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.update-actions button svg {
+    width: 16px;
+    height: 16px;
+}
+
 .update-progress {
     text-align: center;
+}
+
+.progress-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+    text-align: left;
+}
+
+.progress-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    color: white;
+}
+
+.progress-title h4 {
+    margin: 0 0 4px 0;
+    color: #495057;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.progress-title p {
+    margin: 0;
+    color: #6c757d;
+    font-size: 14px;
 }
 
 .update-progress h4 {
@@ -566,6 +749,18 @@ body {
     width: 0%;
     transition: width 0.3s ease;
     position: relative;
+    border-radius: 6px;
+}
+
+.progress-shine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%);
+    animation: shimmer 2s infinite;
+    border-radius: 6px;
 }
 
 .progress-fill::after {
@@ -592,6 +787,44 @@ body {
     font-weight: 500;
 }
 
+.progress-stats {
+    display: flex;
+    gap: 24px;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #495057;
+    font-weight: 500;
+}
+
+.stat-item svg {
+    color: #667eea;
+}
+
+.progress-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    color: #495057;
+    font-size: 14px;
+}
+
+.status-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    color: #667eea;
+}
+
 #updateStatus {
     color: #6c757d;
     font-size: 14px;
@@ -602,6 +835,90 @@ body {
 .update-error {
     text-align: center;
     padding: 20px;
+}
+
+.complete-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+    text-align: left;
+}
+
+.complete-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border-radius: 16px;
+    color: white;
+}
+
+.complete-title h4 {
+    margin: 0 0 4px 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #28a745;
+}
+
+.complete-title p {
+    margin: 0;
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.complete-info {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.info-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border-left: 4px solid #667eea;
+}
+
+.info-card:last-child {
+    border-left-color: #28a745;
+}
+
+.info-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 8px;
+    color: #667eea;
+    flex-shrink: 0;
+}
+
+.info-card:last-child .info-icon {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.info-content h5 {
+    margin: 0 0 4px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.info-content p {
+    margin: 0;
+    font-size: 13px;
+    color: #6c757d;
+    line-height: 1.4;
 }
 
 .update-complete h4,

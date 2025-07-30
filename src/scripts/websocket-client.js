@@ -66,7 +66,12 @@ class WebSocketClient {
 
                 this.socket.on('connect_error', (error) => {
                     clearTimeout(timeout);
-                    console.error('[ERROR] Erro de conexão WebSocket:', error.message || error);
+                    // Log menos verboso para erros de conexão durante tentativas
+                    if (error.message && error.message.includes('ERR_CONNECTION_REFUSED')) {
+                        console.log(`[INFO] Servidor não disponível em ${serverUrl}`);
+                    } else {
+                        console.error('[ERROR] Erro de conexão WebSocket:', error.message || error);
+                    }
                     resolve(false);
                 });
 

@@ -2294,33 +2294,28 @@ async function initializeWebSocket() {
 
 // Conectar com retry
 async function connectWithRetry(maxAttempts = 3) {
+    // Primeiro, tentar a porta padrão (3002) com mais tentativas
+    console.log('[INFO] Tentando conectar na porta padrão 3002...');
+    
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
-            console.log(`[INFO] Tentativa de conexão ${attempt}/${maxAttempts}`);
+            console.log(`[INFO] Tentativa ${attempt}/${maxAttempts} na porta 3002`);
             
-            // Tentar diferentes portas
-            const ports = [3002, 3003, 3004, 3005];
-            
-            for (const port of ports) {
-                try {
-                    const connected = await window.wsClient.connect(`http://localhost:${port}`);
-                    if (connected) {
-                        console.log(`[SUCCESS] Conectado na porta ${port}`);
-                        return true;
-                    }
-                } catch (portError) {
-                    console.log(`[INFO] Porta ${port} não disponível`);
-                }
+            const connected = await window.wsClient.connect('http://localhost:3002');
+            if (connected) {
+                console.log('[SUCCESS] Conectado na porta padrão 3002');
+                safeShowToast('WebSocket conectado com sucesso', 'success');
+                return true;
             }
             
-            // Se chegou aqui, nenhuma porta funcionou
+            // Aguardar antes da próxima tentativa
             if (attempt < maxAttempts) {
                 console.log(`[INFO] Aguardando 2 segundos antes da próxima tentativa...`);
                 await new Promise(resolve => setTimeout(resolve, 2000));
             }
             
         } catch (error) {
-            console.error(`[ERROR] Tentativa ${attempt} falhou:`, error);
+            console.error(`[ERROR] Tentativa ${attempt} na porta 3002 falhou:`, error);
             
             if (attempt < maxAttempts) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -2328,6 +2323,27 @@ async function connectWithRetry(maxAttempts = 3) {
         }
     }
     
+    // Se a porta padrão falhou, tentar portas alternativas (apenas uma vez)
+    console.log('[INFO] Porta padrão falhou, tentando portas alternativas...');
+    const alternativePorts = [3003, 3004, 3005];
+    
+    for (const port of alternativePorts) {
+        try {
+            console.log(`[INFO] Tentando porta alternativa ${port}`);
+            const connected = await window.wsClient.connect(`http://localhost:${port}`);
+            if (connected) {
+                console.log(`[SUCCESS] Conectado na porta alternativa ${port}`);
+                safeShowToast(`WebSocket conectado na porta ${port}`, 'success');
+                return true;
+            }
+        } catch (portError) {
+            console.log(`[INFO] Porta ${port} não disponível`);
+        }
+    }
+    
+    // Se chegou aqui, nenhuma porta funcionou
+    console.warn('[WARNING] Não foi possível conectar em nenhuma porta');
+    safeShowToast('Modo offline - WebSocket não disponível', 'warning');
     return false;
 }
 

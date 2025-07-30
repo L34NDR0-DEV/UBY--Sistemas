@@ -29,11 +29,17 @@ class WebSocketClient {
                 return false;
             }
 
+            console.log(`[INFO] Tentando conectar ao WebSocket em ${serverUrl}`);
+
             // Configurar conexão
             this.socket = io(serverUrl, {
                 transports: ['websocket', 'polling'],
-                timeout: 5000,
-                forceNew: true
+                timeout: 10000,
+                forceNew: true,
+                reconnection: true,
+                reconnectionAttempts: 5,
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 5000
             });
 
             // Configurar eventos básicos
@@ -41,7 +47,13 @@ class WebSocketClient {
 
             // Aguardar conexão
             return new Promise((resolve) => {
+                const timeout = setTimeout(() => {
+                    console.error('[ERROR] Timeout na conexão WebSocket');
+                    resolve(false);
+                }, 15000);
+
                 this.socket.on('connect', () => {
+                    clearTimeout(timeout);
                     this.isConnected = true;
                     this.reconnectAttempts = 0;
                     console.log('[SUCCESS] Conectado ao WebSocket Server');
@@ -53,7 +65,15 @@ class WebSocketClient {
                 });
 
                 this.socket.on('connect_error', (error) => {
-                    console.error('[ERROR] Erro de conexão WebSocket:', error);
+                    clearTimeout(timeout);
+                    console.error('[ERROR] Erro de conexão WebSocket:', error.message || error);
+                    resolve(false);
+                });
+
+                this.socket.on('disconnect', (reason) => {
+                    clearTimeout(timeout);
+                    console.log('[DISCONNECT] Desconectado do WebSocket:', reason);
+                    this.isConnected = false;
                     resolve(false);
                 });
             });

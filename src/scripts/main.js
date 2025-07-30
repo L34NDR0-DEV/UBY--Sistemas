@@ -308,12 +308,14 @@ function applyTheme(theme) {
 
 async function checkConnection() {
     try {
-        const response = await fetch('https://www.google.com/favicon.ico', {
-            method: 'HEAD',
-            mode: 'no-cors',
-            cache: 'no-cache'
-        });
-        isOnline = true;
+        // Verificar conexão usando uma URL local ou método alternativo
+        // Em aplicações Electron, podemos verificar o status do WebSocket
+        if (window.wsClient && window.wsClient.isConnected) {
+            isOnline = true;
+        } else {
+            // Verificar conectividade de rede usando navigator.onLine
+            isOnline = navigator.onLine;
+        }
     } catch (error) {
         isOnline = false;
     }
@@ -2262,8 +2264,10 @@ async function initializeWebSocket() {
             return;
         }
 
-        // Conectar ao servidor
-        const connected = await window.wsClient.connect();
+        console.log('[INFO] Tentando conectar ao WebSocket...');
+        
+        // Conectar ao servidor com retry
+        const connected = await connectWithRetry();
         
         if (connected && window.currentUser) {
             // Autenticar usuário
@@ -2278,10 +2282,53 @@ async function initializeWebSocket() {
             
             console.log('[SUCCESS] WebSocket inicializado com sucesso');
             safeShowToast('Conectado ao servidor em tempo real', 'success');
+        } else {
+            console.warn('[WARNING] Não foi possível conectar ao WebSocket');
+            safeShowToast('Modo offline - algumas funcionalidades limitadas', 'warning');
         }
     } catch (error) {
         console.error('[ERROR] Erro ao inicializar WebSocket:', error);
+        safeShowToast('Erro de conexão - funcionando em modo offline', 'warning');
     }
+}
+
+// Conectar com retry
+async function connectWithRetry(maxAttempts = 3) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            console.log(`[INFO] Tentativa de conexão ${attempt}/${maxAttempts}`);
+            
+            // Tentar diferentes portas
+            const ports = [3002, 3003, 3004, 3005];
+            
+            for (const port of ports) {
+                try {
+                    const connected = await window.wsClient.connect(`http://localhost:${port}`);
+                    if (connected) {
+                        console.log(`[SUCCESS] Conectado na porta ${port}`);
+                        return true;
+                    }
+                } catch (portError) {
+                    console.log(`[INFO] Porta ${port} não disponível`);
+                }
+            }
+            
+            // Se chegou aqui, nenhuma porta funcionou
+            if (attempt < maxAttempts) {
+                console.log(`[INFO] Aguardando 2 segundos antes da próxima tentativa...`);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+            
+        } catch (error) {
+            console.error(`[ERROR] Tentativa ${attempt} falhou:`, error);
+            
+            if (attempt < maxAttempts) {
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+        }
+    }
+    
+    return false;
 }
 
 // Configurar manipuladores de eventos WebSocket

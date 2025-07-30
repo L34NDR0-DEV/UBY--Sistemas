@@ -180,8 +180,8 @@ function createLoginWindow() {
       nodeIntegration: true,
       contextIsolation: false,
       enableRemoteModule: true,
-      webSecurity: false,
-      allowRunningInsecureContent: true
+      webSecurity: true,
+      allowRunningInsecureContent: false
     },
     icon: path.join(__dirname, '..', 'assets', 'logo-system.ico'),
     titleBarStyle: 'hidden',
@@ -219,8 +219,8 @@ function createMainWindow() {
       nodeIntegration: true,
       contextIsolation: false,
       enableRemoteModule: true,
-      webSecurity: false,
-      allowRunningInsecureContent: true
+      webSecurity: true,
+      allowRunningInsecureContent: false
     },
     icon: path.join(__dirname, '..', 'assets', 'logo-system.ico'),
     titleBarStyle: 'hidden',
@@ -281,6 +281,24 @@ app.disableHardwareAcceleration();
 
 // Configurar ícone da aplicação
 app.setAppUserModelId('com.uby.agendamentos');
+
+// Configurações de segurança adicionais
+app.on('web-contents-created', (event, contents) => {
+  // Desabilitar navegação para URLs externas
+  contents.on('will-navigate', (event, navigationUrl) => {
+    const parsedUrl = new URL(navigationUrl);
+    
+    // Permitir apenas navegação para arquivos locais
+    if (parsedUrl.protocol !== 'file:') {
+      event.preventDefault();
+    }
+  });
+  
+  // Desabilitar novas janelas
+  contents.setWindowOpenHandler(() => {
+    return { action: 'deny' };
+  });
+});
 
 // IPC Handlers para comunicação com o renderer
 ipcMain.handle('login', async (event, credentials) => {
@@ -598,19 +616,47 @@ autoUpdater.checkForUpdatesAndNotify = false; // Desabilitar verificação autom
 autoUpdater.autoDownload = false; // Não baixar automaticamente
 autoUpdater.autoInstallOnAppQuit = false; // Não instalar automaticamente
 
+// Configuração para desenvolvimento
+const isDevelopment = process.env.NODE_ENV === 'development' || !app.isPackaged;
+const disableUpdates = isDevelopment || process.env.DISABLE_UPDATES === 'true';
+
+if (disableUpdates) {
+    console.log('🚫 Sistema de atualizações desabilitado (modo desenvolvimento)');
+}
+
 // Configurar logs do autoUpdater (apenas em desenvolvimento)
 if (process.env.NODE_ENV === 'development') {
-  autoUpdater.logger = require('electron-log');
-  autoUpdater.logger.transports.file.level = 'info';
+    autoUpdater.logger = require('electron-log');
+    autoUpdater.logger.transports.file.level = 'info';
+}
+
+// Função para verificar se o GitHub está acessível
+async function checkGitHubAccess() {
+  try {
+    const https = require('https');
+    return new Promise((resolve) => {
+      const req = https.get('https://api.github.com', (res) => {
+        resolve(res.statusCode === 200);
+      });
+      req.on('error', () => resolve(false));
+      req.setTimeout(5000, () => {
+        req.destroy();
+        resolve(false);
+      });
+    });
+  } catch (error) {
+    console.log('Erro ao verificar acesso ao GitHub:', error.message);
+    return false;
+  }
 }
 
 // Event listeners do autoUpdater
 autoUpdater.on('checking-for-update', () => {
-  console.log('Verificando atualizações...');
+  console.log('🔍 Verificando atualizações...');
 });
 
 autoUpdater.on('update-available', (info) => {
-  console.log('Atualização disponível:', info);
+  console.log('✅ Atualização disponível:', info);
   // Enviar para o renderer
   if (mainWindow) {
     mainWindow.webContents.send('update-available', info);
@@ -624,7 +670,7 @@ autoUpdater.on('update-available', (info) => {
 });
 
 autoUpdater.on('update-not-available', (info) => {
-  console.log('Nenhuma atualização disponível');
+  console.log('ℹ️ Nenhuma atualização disponível');
   // Enviar para o renderer
   if (mainWindow) {
     mainWindow.webContents.send('update-not-available', info);
@@ -632,8 +678,9 @@ autoUpdater.on('update-not-available', (info) => {
 });
 
 autoUpdater.on('error', (err) => {
-  console.error('Erro no autoUpdater:', err);
-  // Filtrar erros que não devem ser mostrados ao usuário
+  console.error('❌ Erro no autoUpdater:', err);
+  
+  // Lista de erros que devem ser ignorados (são normais em desenvolvimento)
   const ignoredErrors = [
     'No published versions on GitHub',
     'Cannot find latest.yml',
@@ -643,7 +690,11 @@ autoUpdater.on('error', (err) => {
     'ECONNREFUSED',
     'Network Error',
     'timeout',
-    'ETIMEDOUT'
+    'ETIMEDOUT',
+    'getaddrinfo ENOTFOUND',
+    'connect ECONNREFUSED',
+    'socket hang up',
+    'read ECONNRESET'
   ];
   
   const shouldIgnore = ignoredErrors.some(ignoredError => 
@@ -651,13 +702,14 @@ autoUpdater.on('error', (err) => {
   );
   
   if (!shouldIgnore && mainWindow) {
+    console.log('⚠️ Erro real detectado, enviando para o renderer');
     mainWindow.webContents.send('update-error', {
       message: 'Erro ao verificar atualizações. Tente novamente mais tarde.',
       details: err.message
     });
   } else {
     // Para erros ignorados, enviar mensagem de "sem atualização" em vez de erro
-    console.log('Erro ignorado (normal para desenvolvimento):', err.message);
+    console.log('ℹ️ Erro ignorado (normal para desenvolvimento):', err.message);
     if (mainWindow) {
       mainWindow.webContents.send('update-not-available', { 
         message: 'Nenhuma atualização disponível no momento' 
@@ -667,7 +719,7 @@ autoUpdater.on('error', (err) => {
 });
 
 autoUpdater.on('download-progress', (progressObj) => {
-  console.log(`Progresso do download: ${Math.round(progressObj.percent)}%`);
+  console.log(`📥 Progresso do download: ${Math.round(progressObj.percent)}%`);
   // Enviar para o renderer
   if (mainWindow) {
     mainWindow.webContents.send('download-progress', progressObj);
@@ -675,7 +727,7 @@ autoUpdater.on('download-progress', (progressObj) => {
 });
 
 autoUpdater.on('update-downloaded', (info) => {
-  console.log('Atualização baixada:', info);
+  console.log('✅ Atualização baixada:', info);
   // Enviar para o renderer
   if (mainWindow) {
     mainWindow.webContents.send('update-downloaded', info);
@@ -683,62 +735,110 @@ autoUpdater.on('update-downloaded', (info) => {
 });
 
 // IPC handlers para o sistema de atualização
-ipcMain.on('check-for-updates', () => {
-  console.log('Verificação de atualização solicitada pelo renderer');
-  
-  // Adicionar timeout para evitar que a verificação fique pendente
-  const timeout = setTimeout(() => {
-    console.log('Timeout na verificação de atualizações');
-    if (mainWindow) {
-      mainWindow.webContents.send('update-not-available', { message: 'Nenhuma atualização disponível no momento' });
+ipcMain.on('check-for-updates', async () => {
+    console.log('🔍 Verificação de atualização solicitada pelo renderer');
+    
+    // Verificar se as atualizações estão desabilitadas
+    if (disableUpdates) {
+        console.log('🚫 Atualizações desabilitadas, enviando resposta de "sem atualização"');
+        if (mainWindow) {
+            mainWindow.webContents.send('update-not-available', { 
+                message: 'Sistema de atualizações desabilitado em desenvolvimento' 
+            });
+        }
+        return;
     }
-  }, 10000); // 10 segundos de timeout
-  
-  // Verificar se há releases no GitHub antes de tentar atualizar
-  autoUpdater.checkForUpdates().catch(err => {
-    clearTimeout(timeout);
-    console.log('Erro ao verificar atualizações (normal se não há releases):', err.message);
-    if (mainWindow) {
-      mainWindow.webContents.send('update-not-available', { message: 'Nenhuma atualização disponível no momento' });
+    
+    // Verificar acesso ao GitHub primeiro
+    const githubAccessible = await checkGitHubAccess();
+    if (!githubAccessible) {
+        console.log('⚠️ GitHub não acessível, enviando resposta de "sem atualização"');
+        if (mainWindow) {
+            mainWindow.webContents.send('update-not-available', { 
+                message: 'Nenhuma atualização disponível no momento' 
+            });
+        }
+        return;
     }
-  });
+    
+    // Adicionar timeout para evitar que a verificação fique pendente
+    const timeout = setTimeout(() => {
+        console.log('⏰ Timeout na verificação de atualizações');
+        if (mainWindow) {
+            mainWindow.webContents.send('update-not-available', { message: 'Nenhuma atualização disponível no momento' });
+        }
+    }, 15000); // 15 segundos de timeout
+    
+    try {
+        // Verificar se há releases no GitHub antes de tentar atualizar
+        await autoUpdater.checkForUpdates();
+        clearTimeout(timeout);
+    } catch (err) {
+        clearTimeout(timeout);
+        console.log('ℹ️ Erro ao verificar atualizações (normal se não há releases):', err.message);
+        if (mainWindow) {
+            mainWindow.webContents.send('update-not-available', { message: 'Nenhuma atualização disponível no momento' });
+        }
+    }
 });
 
 // Handler para verificação silenciosa de atualizações
-ipcMain.on('check-for-updates-quiet', () => {
-  console.log('Verificação silenciosa de atualização solicitada pelo renderer');
-  
-  // Adicionar timeout para evitar que a verificação fique pendente
-  const timeout = setTimeout(() => {
-    console.log('Timeout na verificação silenciosa de atualizações');
-    if (mainWindow) {
-      mainWindow.webContents.send('update-not-available-silent');
+ipcMain.on('check-for-updates-quiet', async () => {
+    console.log('🔍 Verificação silenciosa de atualização solicitada pelo renderer');
+    
+    // Verificar se as atualizações estão desabilitadas
+    if (disableUpdates) {
+        console.log('🚫 Atualizações desabilitadas, enviando resposta silenciosa');
+        if (mainWindow) {
+            mainWindow.webContents.send('update-not-available-silent');
+        }
+        return;
     }
-  }, 8000); // 8 segundos de timeout
-  
-  // Verificar se há releases no GitHub sem mostrar mensagens de erro
-  autoUpdater.checkForUpdates().catch(err => {
-    clearTimeout(timeout);
-    console.log('Nenhuma atualização disponível (verificação silenciosa):', err.message);
-    // Enviar resposta silenciosa para o renderer
-    if (mainWindow) {
-      mainWindow.webContents.send('update-not-available-silent');
+    
+    // Verificar acesso ao GitHub primeiro
+    const githubAccessible = await checkGitHubAccess();
+    if (!githubAccessible) {
+        console.log('⚠️ GitHub não acessível, enviando resposta silenciosa');
+        if (mainWindow) {
+            mainWindow.webContents.send('update-not-available-silent');
+        }
+        return;
     }
-  });
+    
+    // Adicionar timeout para evitar que a verificação fique pendente
+    const timeout = setTimeout(() => {
+        console.log('⏰ Timeout na verificação silenciosa de atualizações');
+        if (mainWindow) {
+            mainWindow.webContents.send('update-not-available-silent');
+        }
+    }, 10000); // 10 segundos de timeout
+    
+    try {
+        // Verificar se há releases no GitHub sem mostrar mensagens de erro
+        await autoUpdater.checkForUpdates();
+        clearTimeout(timeout);
+    } catch (err) {
+        clearTimeout(timeout);
+        console.log('ℹ️ Nenhuma atualização disponível (verificação silenciosa):', err.message);
+        // Enviar resposta silenciosa para o renderer
+        if (mainWindow) {
+            mainWindow.webContents.send('update-not-available-silent');
+        }
+    }
 });
 
 ipcMain.on('download-update', () => {
-  console.log('Download de atualização solicitado pelo renderer');
+  console.log('📥 Download de atualização solicitado pelo renderer');
   autoUpdater.downloadUpdate();
 });
 
 ipcMain.on('quit-and-install', () => {
-  console.log('Instalação e reinicialização solicitada pelo renderer');
+  console.log('🔄 Instalação e reinicialização solicitada pelo renderer');
   autoUpdater.quitAndInstall();
 });
 
 ipcMain.on('cancel-update', () => {
-  console.log('Cancelamento de atualização solicitado pelo renderer');
+  console.log('❌ Cancelamento de atualização solicitado pelo renderer');
   // O electron-updater não tem método para cancelar, mas podemos ignorar
 });
 

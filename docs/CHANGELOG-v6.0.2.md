@@ -26,6 +26,9 @@
 - Melhor criptografia de dados sensíveis
 
 ### 🐛 Correções
+- **Correção de WebSocket**: Resolvidos erros de conexão WebSocket bloqueados pela CSP
+- **Política de Segurança**: Atualizada CSP para permitir conexões localhost
+- **Conectividade**: Melhorada estabilidade das conexões em tempo real
 - Correção de bugs menores na interface
 - Melhorias na estabilidade geral
 - Correções de problemas de compatibilidade

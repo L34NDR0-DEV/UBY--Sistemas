@@ -2,14 +2,14 @@
 function getIpcRenderer() {
     const ipcRenderer = window.ipcRenderer;
     if (!ipcRenderer) {
-        console.error('ipcRenderer não está disponível');
+        console.error('❌ ipcRenderer não está disponível');
         return null;
     }
     return ipcRenderer;
 }
 
 // Log para verificar se o script está sendo carregado
-console.log('[UPDATER] Script updater.js carregado!');
+console.log('[UPDATER] ✅ Script updater.js carregado!');
 
 class UpdateManager {
     constructor() {
@@ -18,6 +18,8 @@ class UpdateManager {
         this.isSilentCheck = false;
         this.isDisabled = false;
         this.currentVersion = '1.0.0'; // Versão padrão, será atualizada se possível
+        this.errorCount = 0;
+        this.maxErrors = 3;
         this.setupEventListeners();
         this.getCurrentVersion();
     }
@@ -31,10 +33,11 @@ class UpdateManager {
                 const version = await ipc.invoke('get-app-version');
                 if (version) {
                     this.currentVersion = version;
+                    console.log('[UPDATER] 📋 Versão atual:', this.currentVersion);
                 }
             }
         } catch (error) {
-            console.log('[UPDATER] Não foi possível obter a versão atual:', error);
+            console.log('[UPDATER] ⚠️ Não foi possível obter a versão atual:', error);
         }
     }
 
@@ -43,27 +46,35 @@ class UpdateManager {
         // Aguardar ipcRenderer estar disponível
         setTimeout(() => {
             const ipc = getIpcRenderer();
-            if (!ipc) return;
+            if (!ipc) {
+                console.error('[UPDATER] ❌ IPC Renderer não disponível para setup');
+                return;
+            }
+            
+            console.log('[UPDATER] 🔧 Configurando event listeners...');
             
             // Escutar eventos do processo principal
             ipc.on('update-available', (event, info) => {
+                console.log('[UPDATER] ✅ Atualização disponível recebida:', info);
                 this.isChecking = false;
                 this.errorCount = 0; // Resetar contador de erros em caso de sucesso
                 this.showUpdateDialog(info);
             });
 
             ipc.on('update-not-available', () => {
+                console.log('[UPDATER] ℹ️ Nenhuma atualização disponível');
                 this.isChecking = false;
                 this.errorCount = 0; // Resetar contador de erros em caso de sucesso
                 this.showNoUpdateMessage();
             });
 
             ipc.on('update-error', (event, error) => {
-                console.log('[UPDATER] Erro de atualização recebido:', error);
+                console.log('[UPDATER] ❌ Erro de atualização recebido:', error);
                 this.isChecking = false;
                 
                 // Incrementar contador de erros
                 this.errorCount++;
+                console.log(`[UPDATER] 📊 Contador de erros: ${this.errorCount}/${this.maxErrors}`);
                 
                 // Verificar se é um erro que deve ser ignorado
                 const ignoredErrors = [
@@ -75,7 +86,11 @@ class UpdateManager {
                     'ECONNREFUSED',
                     'Network Error',
                     'timeout',
-                    'ETIMEDOUT'
+                    'ETIMEDOUT',
+                    'getaddrinfo ENOTFOUND',
+                    'connect ECONNREFUSED',
+                    'socket hang up',
+                    'read ECONNRESET'
                 ];
                 
                 const shouldIgnore = ignoredErrors.some(ignoredError => 
@@ -83,16 +98,17 @@ class UpdateManager {
                 );
                 
                 if (shouldIgnore) {
-                    console.log('[UPDATER] Erro ignorado (normal para desenvolvimento):', error.message);
+                    console.log('[UPDATER] ℹ️ Erro ignorado (normal para desenvolvimento):', error.message);
                     this.showNoUpdateMessage();
                 } else {
                     // Mostrar erro apenas se for um erro real que o usuário deve ver
                     const errorMessage = error.message || error.details || 'Erro desconhecido';
+                    console.log('[UPDATER] ⚠️ Erro real detectado:', errorMessage);
                     this.showError('Erro ao verificar atualizações: ' + errorMessage);
                     
                     // Desabilitar atualizações se houver muitos erros
                     if (this.errorCount >= this.maxErrors) {
-                        console.log('[UPDATER] Muitos erros detectados, desabilitando sistema de atualizações');
+                        console.log('[UPDATER] 🚫 Muitos erros detectados, desabilitando sistema de atualizações');
                         this.isDisabled = true;
                         this.showToast('Sistema de atualizações temporariamente desabilitado devido a problemas de conectividade.', 'warning');
                         
@@ -100,7 +116,7 @@ class UpdateManager {
                         setTimeout(() => {
                             this.isDisabled = false;
                             this.errorCount = 0;
-                            console.log('[UPDATER] Sistema de atualizações re-habilitado');
+                            console.log('[UPDATER] ✅ Sistema de atualizações re-habilitado');
                         }, 30 * 60 * 1000); // 30 minutos
                     }
                 }
@@ -108,30 +124,36 @@ class UpdateManager {
             
             // Listener para verificação silenciosa
             ipc.on('update-not-available-silent', () => {
-                console.log('[UPDATER] Nenhuma atualização disponível (verificação silenciosa)');
+                console.log('[UPDATER] 🔇 Nenhuma atualização disponível (verificação silenciosa)');
                 this.isSilentCheck = false;
             });
             
-            // Contador de erros para desabilitar atualizações se houver muitos problemas
-            this.errorCount = 0;
-            this.maxErrors = 3;
-
             ipc.on('download-progress', (event, progress) => {
+                console.log('[UPDATER] 📥 Progresso do download:', progress);
                 this.updateDownloadProgress(progress);
             });
 
             ipc.on('update-downloaded', () => {
+                console.log('[UPDATER] ✅ Atualização baixada com sucesso');
                 this.showUpdateReady();
             });
+            
+            console.log('[UPDATER] ✅ Event listeners configurados com sucesso');
         }, 100);
     }
 
     // Verificar atualizações
     async checkForUpdates() {
-        console.log('[UPDATER] checkForUpdates chamado');
+        console.log('[UPDATER] 🔍 checkForUpdates chamado');
         
         if (this.isChecking) {
-            console.log('[UPDATER] Já está verificando atualizações, ignorando...');
+            console.log('[UPDATER] ⏳ Já está verificando atualizações, ignorando...');
+            return;
+        }
+        
+        if (this.isDisabled) {
+            console.log('[UPDATER] 🚫 Sistema de atualizações desabilitado');
+            this.showToast('Sistema de atualizações temporariamente desabilitado.', 'warning');
             return;
         }
         
@@ -141,27 +163,27 @@ class UpdateManager {
         try {
             // Solicitar verificação ao processo principal
             const ipc = getIpcRenderer();
-            console.log('[UPDATER] IPC Renderer:', ipc);
+            console.log('[UPDATER] 📡 IPC Renderer:', ipc);
             
             if (ipc) {
-                console.log('[UPDATER] Enviando check-for-updates para o processo principal');
+                console.log('[UPDATER] 📤 Enviando check-for-updates para o processo principal');
                 ipc.send('check-for-updates');
                 
                 // Adicionar timeout para evitar que a verificação fique pendente indefinidamente
                 setTimeout(() => {
                     if (this.isChecking) {
-                        console.log('[UPDATER] Timeout na verificação de atualizações');
+                        console.log('[UPDATER] ⏰ Timeout na verificação de atualizações');
                         this.isChecking = false;
                         this.showNoUpdateMessage();
                     }
-                }, 10000); // 10 segundos de timeout
+                }, 20000); // 20 segundos de timeout
             } else {
-                console.error('[UPDATER] IPC Renderer não disponível');
+                console.error('[UPDATER] ❌ IPC Renderer não disponível');
                 this.showError('Sistema de atualizações não disponível');
                 this.isChecking = false;
             }
         } catch (error) {
-            console.error('Erro ao verificar atualizações:', error);
+            console.error('[UPDATER] ❌ Erro ao verificar atualizações:', error);
             this.showError('Erro ao verificar atualizações');
             this.isChecking = false;
         }
@@ -600,52 +622,43 @@ class UpdateManager {
     }
 }
 
-// Inicializar quando o DOM estiver carregado
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('[UPDATER] Inicializando sistema de atualizações...');
-    
-    // Criar instância global
-    window.updateManager = new UpdateManager();
-    console.log('[UPDATER] UpdateManager criado:', window.updateManager);
-    
-    // Verificar automaticamente por atualizações ao inicializar
-    // O botão só será criado se houver uma atualização disponível
-    setTimeout(() => {
-        // Verificar se o sistema de atualizações está habilitado
-        if (window.updateManager && !window.updateManager.isDisabled) {
-            window.updateManager.checkForUpdatesQuietly();
-        }
-    }, 3000); // Aguardar 3 segundos após o carregamento
-});
-
 // Adicionar método para verificação silenciosa
 UpdateManager.prototype.checkForUpdatesQuietly = function() {
-    console.log('[UPDATER] Verificando atualizações silenciosamente...');
+    console.log('[UPDATER] 🔇 Verificando atualizações silenciosamente...');
+    
+    if (this.isDisabled) {
+        console.log('[UPDATER] 🚫 Sistema de atualizações desabilitado (verificação silenciosa)');
+        return;
+    }
     
     this.isSilentCheck = true;
     
     const ipc = getIpcRenderer();
     if (!ipc) {
-        console.log('[UPDATER] IPC não disponível para verificação silenciosa');
+        console.log('[UPDATER] ❌ IPC não disponível para verificação silenciosa');
         this.isSilentCheck = false;
         return;
     }
 
     // Verificar por atualizações sem mostrar mensagens
+    console.log('[UPDATER] 📤 Enviando check-for-updates-quiet para o processo principal');
     ipc.send('check-for-updates-quiet');
     
     // Resetar flag após um tempo
     setTimeout(() => {
         this.isSilentCheck = false;
+        console.log('[UPDATER] 🔇 Verificação silenciosa concluída');
     }, 5000);
 };
 
 // Adicionar método para criar botão de atualização
 UpdateManager.prototype.createUpdateButton = function() {
     const headerRight = document.querySelector('.header-right');
-    console.log('[UPDATER] Header right encontrado:', headerRight);
+    console.log('[UPDATER] 🔍 Header right encontrado:', headerRight);
     
     if (headerRight && !document.getElementById('checkUpdatesBtn')) {
+        console.log('[UPDATER] 🔧 Criando botão de atualização...');
+        
         const updateBtn = document.createElement('button');
         updateBtn.className = 'header-btn update-btn';
         updateBtn.id = 'checkUpdatesBtn';
@@ -662,7 +675,7 @@ UpdateManager.prototype.createUpdateButton = function() {
         updateBtn.style.animation = 'pulse 2s infinite';
         
         updateBtn.addEventListener('click', () => {
-            console.log('[UPDATER] Botão de atualização clicado!');
+            console.log('[UPDATER] 🔘 Botão de atualização clicado!');
             window.updateManager.checkForUpdates();
         });
         
@@ -670,9 +683,34 @@ UpdateManager.prototype.createUpdateButton = function() {
         const lastBtn = headerRight.lastElementChild;
         headerRight.insertBefore(updateBtn, lastBtn);
         
-        console.log('[UPDATER] Botão de atualização criado e adicionado ao header');
+        console.log('[UPDATER] ✅ Botão de atualização criado e adicionado ao header');
         
         // Mostrar notificação de atualização disponível
         this.showToast('Nova atualização disponível! Clique no botão vermelho para atualizar.', 'info');
+    } else {
+        console.log('[UPDATER] ⚠️ Header right não encontrado ou botão já existe');
     }
 };
+
+// Inicializar quando o DOM estiver carregado
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('[UPDATER] 🚀 Inicializando sistema de atualizações...');
+    
+    // Criar instância global
+    window.updateManager = new UpdateManager();
+    console.log('[UPDATER] ✅ UpdateManager criado:', window.updateManager);
+    
+    // Verificar automaticamente por atualizações ao inicializar
+    // O botão só será criado se houver uma atualização disponível
+    setTimeout(() => {
+        console.log('[UPDATER] ⏰ Iniciando verificação automática de atualizações...');
+        
+        // Verificar se o sistema de atualizações está habilitado
+        if (window.updateManager && !window.updateManager.isDisabled) {
+            console.log('[UPDATER] 🔍 Sistema habilitado, iniciando verificação silenciosa...');
+            window.updateManager.checkForUpdatesQuietly();
+        } else {
+            console.log('[UPDATER] 🚫 Sistema de atualizações desabilitado ou não disponível');
+        }
+    }, 3000); // Aguardar 3 segundos após o carregamento
+});

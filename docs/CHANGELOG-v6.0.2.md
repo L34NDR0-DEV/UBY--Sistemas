@@ -1,23 +1,23 @@
 # Changelog - Versão 6.0.2
 
-## 🚀 Nova Release
+## 🚀 Nova Release - Ícone do Sistema Atualizado
 
 ### 📦 Atualizações Gerais
 - **Versão**: 6.0.2
-- **Data**: $(Get-Date -Format "dd/MM/yyyy HH:mm")
+- **Data**: 30/01/2025
 - **Compatibilidade**: Windows, macOS, Linux
 
-### 🔧 Melhorias de Performance
-- Otimização adicional do sistema de cache offline
-- Melhorias na sincronização de dados em tempo real
-- Redução adicional do uso de memória
-- Melhor performance na inicialização da aplicação
+### 🎨 Principais Melhorias - Ícone do Sistema
+- **Ícone de Alta Resolução**: Atualizado para 256x256 pixels para melhor qualidade
+- **Melhor Aparência**: Ícone mais nítido na barra de tarefas e área de trabalho
+- **Build Otimizado**: Configuração de build atualizada para usar ícone de alta resolução
+- **Compatibilidade**: Mantidos ícones SVG da interface no tamanho original (16x16)
 
-### 🎨 Melhorias na Interface
-- Refinamentos visuais adicionais na interface principal
-- Melhor responsividade em diferentes resoluções
-- Otimização das animações CSS
-- Melhorias na acessibilidade
+### 🔧 Melhorias Técnicas
+- Configuração do `package.json` atualizada para usar `logo-256.png`
+- Arquivo `main.js` configurado para usar `logo-system.ico`
+- Geração automática de ícone de alta qualidade no processo de build
+- Melhor integração com o sistema operacional
 
 ### 🔒 Segurança
 - Atualizações de dependências de segurança
@@ -55,4 +55,4 @@
 - `package.json` - Atualização da versão para 6.0.2
 - `docs/CHANGELOG-v6.0.2.md` - Este arquivo de changelog
 - Melhorias gerais em todo o código base
-- Otimizações no sistema de cache e sincronização 
+- Otimizações no sistema de cache e sincronização

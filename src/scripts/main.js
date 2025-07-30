@@ -44,10 +44,25 @@ function showToast(message, type = 'info') {
 // Função para obter ícone do toast
 function getToastIcon(type) {
     const icons = {
-        success: '✅',
-        error: '❌',
-        warning: '⚠️',
-        info: 'ℹ️'
+        success: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12A10 10 0 1 1 5.93 7.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M22 4L12 14.01L9 11.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`,
+        error: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`,
+        warning: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18A2 2 0 0 0 3.54 21H20.46A2 2 0 0 0 22.18 18L13.71 3.86A2 2 0 0 0 10.29 3.86Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 9V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 17H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`,
+        info: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 16V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 8H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`
     };
     return icons[type] || icons.info;
 }
@@ -411,12 +426,6 @@ async function handleCreateAgendamento(e) {
     
     const formData = new FormData(e.target);
     const coordenadas = formData.get('linkCoordenadas') || document.getElementById('linkCoordenadas').value;
-    
-    // Validar formato das coordenadas
-    if (coordenadas && !/^-?\d+\.?\d*,-?\d+\.?\d*$/.test(coordenadas.trim())) {
-        showToast('Formato de coordenadas inválido. Use: latitude,longitude (ex: -23.5505,-46.6333)', 'error');
-        return;
-    }
     
     const agendamento = {
         data: formData.get('data') || document.getElementById('data').value,
@@ -862,19 +871,13 @@ async function handleEditAgendamento(e) {
     try {
         const coordenadas = document.getElementById('editLinkCoordenadas').value || '';
         
-        // Validar formato das coordenadas
-        if (coordenadas && !/^-?\d+\.?\d*,-?\d+\.?\d*$/.test(coordenadas.trim())) {
-            showToast('Formato de coordenadas inválido. Use: latitude,longitude (ex: -23.5505,-46.6333)', 'error');
-            return;
-        }
-        
         const updatedData = {
             id: editingAgendamento.id,
             data: document.getElementById('editData').value,
             horario: document.getElementById('editHorario').value,
             nomeCliente: document.getElementById('editNomeCliente').value,
             numeroContato: document.getElementById('editNumeroContato').value,
-            atendente: document.getElementById('editAtendente').value,
+            // O campo atendente não é incluído para preservar o valor original
             status: document.getElementById('editStatus').value,
             cidade: document.getElementById('editCidade').value,
             linkCoordenadas: coordenadas.trim(),
@@ -901,7 +904,7 @@ async function handleEditAgendamento(e) {
         closeEditModal();
         
         if (window.TTSNotifications) {
-            window.TTSNotifications.speak(`Agendamento de ${updatedData.nomeCliente} foi atualizado`);
+            window.TTSNotifications.agendamentoAtualizado(updatedData.nomeCliente);
         }
         showToast('Agendamento atualizado com sucesso!', 'success');
     } catch (error) {
@@ -954,7 +957,7 @@ async function handleCancelAgendamento(e) {
         
         // Notificação TTS
         if (window.TTSNotifications) {
-            window.TTSNotifications.speak(`Agendamento de ${agendamentoParaCancelar.nomeCliente} foi cancelado`);
+            window.TTSNotifications.agendamentoCancelado(agendamentoParaCancelar.nomeCliente);
         }
         
         console.log(`Agendamento de ${agendamentoParaCancelar.nomeCliente} cancelado com sucesso!`);
@@ -1021,7 +1024,7 @@ function checkForgottenAgendamentos() {
             
             if (minutesLate > 0 && minutesLate % 15 === 0) { // Avisar a cada 15 minutos
                 if (window.TTSNotifications) {
-                    window.TTSNotifications.speak(`Atenção! Agendamento de ${agendamento.nomeCliente} está atrasado em ${minutesLate} minutos`);
+                    window.TTSNotifications.agendamentoAtrasado(agendamento.nomeCliente, minutesLate);
                 }
             }
         }
@@ -1054,13 +1057,23 @@ function openLocationModal(coordinates) {
 
     const modal = document.getElementById('locationModal');
     const coordinatesSpan = document.getElementById('currentCoordinates');
-    if (!modal || !coordinatesSpan) {
+    const citySpan = document.getElementById('currentCity');
+    if (!modal || !coordinatesSpan || !citySpan) {
         showToast('Erro ao abrir o modal de localização', 'error');
         return;
     }
 
     coordinatesSpan.textContent = `${lat},${lng}`;
-    modal.style.display = 'block';
+    citySpan.textContent = 'Carregando...';
+    modal.classList.add('show');
+
+    // Buscar nome da cidade usando reverse geocoding
+    fetchCityName(lat, lng).then(cityName => {
+        citySpan.textContent = cityName;
+    }).catch(error => {
+        console.error('Erro ao buscar nome da cidade:', error);
+        citySpan.textContent = 'Localização desconhecida';
+    });
 
     setTimeout(() => {
         initializeMap(`${lat},${lng}`);
@@ -1071,7 +1084,7 @@ function openLocationModal(coordinates) {
 
 function closeLocationModal() {
     const modal = document.getElementById('locationModal');
-    modal.style.display = 'none';
+    modal.classList.remove('show');
     
     // Destruir o mapa para evitar problemas
     if (map) {
@@ -1126,7 +1139,7 @@ function initializeMap(coordinates) {
         map = L.map('map', {
             zoomControl: false, // Remover controles padrão
             attributionControl: false // Remover atribuição padrão
-        }).setView([lat, lng], 15);
+        }).setView([lat, lng], 16); // Zoom mais próximo para melhor visualização
         
         console.log('Mapa inicializado com sucesso');
         
@@ -1143,27 +1156,34 @@ function initializeMap(coordinates) {
             className: 'custom-marker',
             html: `
                 <div style="
-                    background: #FF6B00;
-                    width: 30px;
-                    height: 30px;
+                    background: linear-gradient(135deg, #FF6B00 0%, #FF8C00 100%);
+                    width: 40px;
+                    height: 40px;
                     border-radius: 50% 50% 50% 0;
                     transform: rotate(-45deg);
-                    border: 3px solid white;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                    border: 4px solid white;
+                    box-shadow: 0 4px 12px rgba(255, 107, 0, 0.4);
                     display: flex;
                     align-items: center;
                     justify-content: center;
+                    position: relative;
                 ">
                     <div style="
                         color: white;
-                        font-size: 12px;
+                        font-size: 16px;
                         font-weight: bold;
                         transform: rotate(45deg);
-                    ">📍</div>
+                        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+                    ">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                    </div>
                 </div>
             `,
-            iconSize: [30, 30],
-            iconAnchor: [15, 30]
+            iconSize: [40, 40],
+            iconAnchor: [20, 40]
         });
         
         console.log('Ícone personalizado criado');
@@ -1171,12 +1191,6 @@ function initializeMap(coordinates) {
         // Adicionar marcador personalizado
         const marker = L.marker([lat, lng], { icon: customIcon })
             .addTo(map)
-            .bindPopup(`
-                <div style="text-align: center; padding: 5px;">
-                    <strong>📍 Localização do Agendamento</strong><br>
-                    <small>Lat: ${lat.toFixed(6)}<br>Lng: ${lng.toFixed(6)}</small>
-                </div>
-            `)
             .openPopup();
         
         console.log('Marcador adicionado e popup aberto');
@@ -1194,6 +1208,32 @@ function initializeMap(coordinates) {
     } catch (error) {
         console.error('Erro ao inicializar mapa:', error);
         showToast('Erro ao carregar o mapa: ' + error.message, 'error');
+    }
+}
+
+// Função para buscar o nome da cidade usando reverse geocoding
+async function fetchCityName(lat, lng) {
+    try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`);
+        const data = await response.json();
+        
+        if (data.address) {
+            // Priorizar cidade, depois município, depois localidade
+            const cityName = data.address.city || 
+                           data.address.town || 
+                           data.address.municipality || 
+                           data.address.locality || 
+                           data.address.village ||
+                           data.address.county ||
+                           'Localização desconhecida';
+            
+            return cityName;
+        }
+        
+        return 'Localização desconhecida';
+    } catch (error) {
+        console.error('Erro na busca de cidade:', error);
+        return 'Localização desconhecida';
     }
 }
 

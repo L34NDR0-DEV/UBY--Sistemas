@@ -244,7 +244,7 @@
                             </svg>
                             Atendente
                         </label>
-                        <input type="text" id="atendente" placeholder="Nome do atendente" required>
+                        <input type="text" id="atendente" placeholder="Nome do atendente" required readonly>
                     </div>
                     
                     <div class="form-group">
@@ -330,8 +330,8 @@
                             </svg>
                             Coordenadas (Latitude, Longitude)
                         </label>
-                        <input type="text" id="linkCoordenadas" placeholder="Ex: -23.5505,-46.6333" pattern="^-?\d+\.?\d*,-?\d+\.?\d*$" title="Formato: latitude,longitude (ex: -23.5505,-46.6333)">
-                        <small class="form-help">Digite as coordenadas no formato: latitude,longitude</small>
+                        <input type="text" id="linkCoordenadas" placeholder="Ex: -19.950175801833865, -52.59127476590639">
+                        <small class="form-help">Digite as coordenadas no formato: latitude,longitude (aceita qualquer formato válido)</small>
                     </div>
                 </div>
                 
@@ -597,7 +597,7 @@
                     </div>
                     <div class="form-group">
                         <label for="editAtendente">Atendente</label>
-                        <input type="text" id="editAtendente" required>
+                        <input type="text" id="editAtendente" required readonly>
                     </div>
                     <div class="form-group">
                         <label for="editStatus">Status</label>
@@ -660,7 +660,7 @@
                     </div>
                     <div class="form-group">
                         <label for="editLinkCoordenadas">Coordenadas (Latitude, Longitude)</label>
-                        <input type="text" id="editLinkCoordenadas" placeholder="Ex: -23.5505,-46.6333" pattern="^-?\d+\.?\d*,-?\d+\.?\d*$" title="Formato: latitude,longitude (ex: -23.5505,-46.6333)">
+                        <input type="text" id="editLinkCoordenadas" placeholder="Ex: -19.950175801833865, -52.59127476590639">
                         <small class="form-help">Digite as coordenadas no formato: latitude,longitude</small>
                     </div>
                 </div>
@@ -837,16 +837,6 @@
                     Localização do Agendamento
                 </div>
                 <div class="system-window-controls">
-                    <button class="system-btn minimize-btn">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
-                    </button>
-                    <button class="system-btn maximize-btn">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                        </svg>
-                    </button>
                     <button class="system-btn close-btn" id="closeLocationModal">
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -881,12 +871,21 @@
                     </div>
                 </div>
                 <div class="coordinates-info">
-                    <div class="coordinates-display">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                            <circle cx="12" cy="10" r="3"></circle>
-                        </svg>
-                        <span><strong>Coordenadas:</strong> <span id="currentCoordinates"></span></span>
+                    <div class="location-details">
+                        <div class="city-info">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg>
+                            <span><strong>Cidade:</strong> <span id="currentCity">Carregando...</span></span>
+                        </div>
+                        <div class="coordinates-display">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg>
+                            <span><strong>Coordenadas:</strong> <span id="currentCoordinates"></span></span>
+                        </div>
                     </div>
                     <div class="coordinates-actions">
                         <button type="button" id="openInMaps" class="btn-action">

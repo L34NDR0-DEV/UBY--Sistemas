@@ -718,17 +718,20 @@ ipcMain.handle('get-app-version', () => {
 // Inicializar servidor WebSocket
 async function initializeWebSocketServer() {
   try {
-    console.log('🔄 Iniciando servidor WebSocket...');
-    wsServer = new WebSocketServer(3001);
+    console.log('[INFO] Iniciando servidor WebSocket...');
+    wsServer = new WebSocketServer(3002); // Porta inicial, mas será dinâmica
     const started = await wsServer.start();
     
     if (started) {
-      console.log('[SUCCESS] Servidor WebSocket iniciado com sucesso na porta 3001');
+      console.log(`[SUCCESS] Servidor WebSocket iniciado com sucesso na porta ${wsServer.port}`);
+      
+      // Salvar porta em variável global para uso posterior
+      global.websocketPort = wsServer.port;
     } else {
       console.error('[ERROR] Falha ao iniciar servidor WebSocket');
     }
   } catch (error) {
-    console.error('❌ Erro ao inicializar servidor WebSocket:', error);
+    console.error('[ERROR] Erro ao inicializar servidor WebSocket:', error);
   }
 }
 
@@ -738,9 +741,9 @@ function stopWebSocketServer() {
     try {
       wsServer.stop();
       wsServer = null;
-      console.log('🛑 Servidor WebSocket parado');
+      console.log('[STOP] Servidor WebSocket parado');
     } catch (error) {
-      console.error('❌ Erro ao parar servidor WebSocket:', error);
+      console.error('[ERROR] Erro ao parar servidor WebSocket:', error);
     }
   }
 }

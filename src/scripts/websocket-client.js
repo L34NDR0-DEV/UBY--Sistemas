@@ -21,7 +21,7 @@ class WebSocketClient {
     /**
      * Conectar ao servidor WebSocket
      */
-    async connect(serverUrl = 'http://localhost:3001') {
+    async connect(serverUrl = 'http://localhost:3002') {
         try {
             // Importar Socket.IO client
             if (typeof io === 'undefined') {
@@ -395,6 +395,22 @@ class WebSocketClient {
     handleAuthSuccess(data) {
         console.log('[AUTH] Autenticado no WebSocket');
         this.isAuthenticated = true;
+        
+        if (this.onAuthenticated) {
+            this.onAuthenticated(data);
+        }
+    }
+
+    /**
+     * Manipular evento de autenticação
+     */
+    handleAuthenticated(data) {
+        console.log('[AUTH] Usuário autenticado:', data);
+        this.isAuthenticated = true;
+        this.userId = data.userId;
+        
+        // Emitir evento de autenticação
+        this.emit('authenticated', data);
         
         if (this.onAuthenticated) {
             this.onAuthenticated(data);

@@ -2430,41 +2430,45 @@ input:checked + .toggle-slider:before {
 
 /* Modal de Localização com estilo de janela do sistema */
 .location-modal-content.system-window {
-    background: #f5f6f7;
-    border-radius: 8px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 107, 0, 0.1);
     border: 1px solid #d0d0d0;
     overflow: hidden;
     max-width: 900px;
     width: 90%;
     max-height: 80vh;
     margin: 5% auto;
+    backdrop-filter: blur(10px);
 }
 
 .system-window-header {
-    background: linear-gradient(180deg, #f0f0f0 0%, #e0e0e0 100%);
-    border-bottom: 1px solid #c0c0c0;
-    padding: 8px 16px;
+    background: linear-gradient(135deg, #FF6B00 0%, #FF8C00 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 12px 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    height: 32px;
+    height: 40px;
     user-select: none;
+    color: white;
 }
 
 .system-window-title {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    color: #333;
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .system-window-title svg {
-    width: 16px;
-    height: 16px;
-    color: #666;
+    width: 18px;
+    height: 18px;
+    color: white;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
 }
 
 .system-window-controls {
@@ -2473,25 +2477,28 @@ input:checked + .toggle-slider:before {
 }
 
 .system-btn {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     border: none;
-    border-radius: 4px;
-    background: transparent;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: all 0.2s ease;
+    color: white;
 }
 
 .system-btn:hover {
-    background: rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
 }
 
 .system-btn.close-btn:hover {
     background: #e81123;
     color: white;
+    transform: scale(1.05);
 }
 
 .system-btn svg {
@@ -2501,8 +2508,8 @@ input:checked + .toggle-slider:before {
 
 .system-window-body {
     padding: 0;
-    background: #f5f6f7;
-    height: calc(80vh - 50px);
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    height: calc(80vh - 60px);
     overflow: hidden;
 }
 
@@ -2520,18 +2527,32 @@ input:checked + .toggle-slider:before {
 }
 
 .system-window .coordinates-info {
-    padding: 16px;
-    background: #f8f9fa;
-    border-top: 1px solid #e0e0e0;
+    padding: 20px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-top: 1px solid rgba(255, 107, 0, 0.1);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.system-window .location-details {
+    margin-bottom: 12px;
+}
+
+.system-window .city-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #333;
+    font-weight: 500;
 }
 
 .system-window .coordinates-display {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 12px;
     font-size: 14px;
-    color: #333;
+    color: #666;
 }
 
 .system-window .coordinates-actions {
@@ -2541,21 +2562,25 @@ input:checked + .toggle-slider:before {
 }
 
 .system-window .btn-action {
-    padding: 8px 16px;
-    background: #0078d4;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #FF6B00 0%, #FF8C00 100%);
     color: white;
     border: none;
-    border-radius: 4px;
-    font-size: 13px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 6px;
-    transition: background-color 0.2s;
+    gap: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
 }
 
 .system-window .btn-action:hover {
-    background: #106ebe;
+    background: linear-gradient(135deg, #FF8C00 0%, #FF6B00 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 107, 0, 0.4);
 }
 
 .system-window .map-controls {
@@ -2596,25 +2621,25 @@ input:checked + .toggle-slider:before {
     }
     
     .system-window-header {
-        padding: 6px 12px;
-        height: 28px;
+        padding: 8px 12px;
+        height: 36px;
     }
     
     .system-window-title {
-        font-size: 12px;
+        font-size: 13px;
     }
     
     .system-btn {
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
     }
     
     .system-window-body {
-        height: calc(90vh - 40px);
+        height: calc(90vh - 50px);
     }
     
     .system-window .coordinates-info {
-        padding: 12px;
+        padding: 16px;
     }
     
     .system-window .coordinates-actions {
@@ -2624,6 +2649,8 @@ input:checked + .toggle-slider:before {
     .system-window .btn-action {
         width: 100%;
         justify-content: center;
+        padding: 10px 16px;
+        font-size: 13px;
     }
 }
 
@@ -2934,5 +2961,47 @@ input:checked + .toggle-slider:before {
     background: linear-gradient(135deg, #5a6268 0%, #495057 100%) !important;
     transform: translateY(-1px) !important;
     box-shadow: 0 6px 16px rgba(108, 117, 125, 0.4) !important;
+}
+
+/* Estilo para campos readonly */
+.form-group input[readonly] {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
+    border-color: #dee2e6;
+}
+
+.form-group input[readonly]:focus {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    box-shadow: none;
+}
+
+/* Tema escuro para campos readonly */
+[data-theme="dark"] .form-group input[readonly] {
+    background-color: #404040;
+    color: #a0a0a0;
+    border-color: #555555;
+}
+
+[data-theme="dark"] .form-group input[readonly]:focus {
+    background-color: #404040;
+    border-color: #555555;
+}
+
+/* Animação para o marcador de localização */
+@keyframes marker-pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.7;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 

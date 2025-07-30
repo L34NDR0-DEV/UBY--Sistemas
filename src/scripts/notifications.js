@@ -134,17 +134,6 @@ class NotificationSystem {
         item.dataset.id = notification.id;
 
         const icon = this.getIcon(notification.type);
-        
-        // Criar botões de ação
-        let actionsHtml = '';
-        if (notification.actions && notification.actions.length > 0) {
-            const buttonsHtml = notification.actions.map((action, index) => {
-                const actionId = action.id || `action_${index}`;
-                return `<button class="notification-item-btn ${action.style || 'secondary'}" data-notification-id="${notification.id}" data-action-id="${actionId}">${action.icon || ''}${action.label}</button>`;
-            }).join('');
-            
-            actionsHtml = `<div class="notification-item-actions">${buttonsHtml}</div>`;
-        }
 
         item.innerHTML = `
             <div class="notification-item-header">
@@ -162,10 +151,9 @@ class NotificationSystem {
             </div>
             <div class="notification-item-content">${notification.message}</div>
             ${this.createDetailsHtml(notification.data)}
-            ${actionsHtml}
         `;
 
-        // Adicionar event listeners
+        // Adicionar event listeners apenas para o botão de fechar
         this.attachItemEventListeners(item, notification);
 
         return item;
@@ -175,29 +163,18 @@ class NotificationSystem {
      * Anexar event listeners aos itens do painel
      */
     attachItemEventListeners(item, notification) {
-        // Event listener para botões de ação
-        const actionButtons = item.querySelectorAll('.notification-item-btn[data-action-id]');
+        console.log('[DEBUG] Anexando event listeners para notificação:', notification.id);
         
-        actionButtons.forEach(button => {
-            const notificationId = button.dataset.notificationId;
-            const actionId = button.dataset.actionId;
-            
-            button.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.handleAction(notificationId, actionId);
-            });
-        });
-
         // Event listener para botão de fechar
         const closeButton = item.querySelector('.notification-item-close');
         if (closeButton) {
-            const notificationId = closeButton.dataset.notificationId;
+            console.log('[DEBUG] Botão de fechar encontrado');
             
             closeButton.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                this.removeNotification(notificationId);
+                console.log('[DEBUG] Fechando notificação:', notification.id);
+                this.removeNotification(notification.id);
             });
         }
     }

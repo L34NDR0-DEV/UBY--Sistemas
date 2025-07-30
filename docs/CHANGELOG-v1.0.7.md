@@ -1,5 +1,16 @@
 # Changelog - Versão 1.0.7
 
+## Novas Funcionalidades
+
+### 🔊 Som de Alerta para Atrasos
+- **Funcionalidade**: Adicionado som de alerta (som.mp3) para notificações de atraso
+- **Implementação**: 
+  - Som toca antes da mensagem de voz para atrasos
+  - Arquivo de som localizado em `assets/som.mp3`
+  - Volume configurado para 70% para não ser muito alto
+  - Delay de 500ms entre som e mensagem de voz
+  - Aplicado apenas para agendamentos atrasados
+
 ## Correções Implementadas
 
 ### 🔧 Função de Copiar Contato
@@ -34,6 +45,7 @@
 
 ## Arquivos Modificados
 
+- `src/scripts/tts.js` - Adicionado som de alerta para atrasos
 - `src/scripts/main.js` - Correção da função copyToClipboard e handlers de atualização
 - `src/styles/main.css` - Remoção da animação hover do contato
 - `src/scripts/updater.js` - Lógica condicional do botão de atualização

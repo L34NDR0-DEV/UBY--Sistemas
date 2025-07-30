@@ -5,28 +5,80 @@
 
 const { Server } = require('socket.io');
 const http = require('http');
+const net = require('net');
+const Database = require('../utils/database');
+const OfflineCache = require('../utils/offline-cache');
+const ConflictResolver = require('../utils/conflict-resolver');
 
 class WebSocketServer {
-    constructor(port = 3001) {
-        this.port = port;
+    constructor(startPort = 3002) {
+        this.startPort = startPort;
+        this.port = null;
         this.server = null;
         this.io = null;
+        this.db = new Database();
+        this.cache = new OfflineCache();
+        this.conflictResolver = new ConflictResolver();
         this.connectedUsers = new Map();
         this.isRunning = false;
         this.stats = {
             connections: 0,
             totalConnections: 0,
             messagesReceived: 0,
-            messagesSent: 0
+            messagesSent: 0,
+            conflicts: 0,
+            cacheHits: 0
         };
+    }
+
+    /**
+     * Verificar se uma porta está disponível
+     */
+    async isPortAvailable(port) {
+        return new Promise((resolve) => {
+            const tester = net.createServer()
+                .once('error', () => resolve(false))
+                .once('listening', () => {
+                    tester.once('close', () => resolve(true))
+                        .close();
+                })
+                .listen(port);
+        });
+    }
+
+    /**
+     * Encontrar uma porta disponível
+     */
+    async findAvailablePort(startPort) {
+        let port = startPort;
+        const maxAttempts = 10;
+        
+        for (let i = 0; i < maxAttempts; i++) {
+            if (await this.isPortAvailable(port)) {
+                return port;
+            }
+            port++;
+        }
+        
+        throw new Error(`Nenhuma porta disponível encontrada entre ${startPort} e ${startPort + maxAttempts}`);
     }
 
     /**
      * Iniciar servidor WebSocket
      */
-    start() {
-        return new Promise((resolve, reject) => {
+    async start() {
+        return new Promise(async (resolve, reject) => {
             try {
+                // Inicializar banco de dados
+                await this.db.initialize();
+                
+                // Inicializar cache offline
+                this.cache.initialize();
+                
+                // Encontrar porta disponível
+                this.port = await this.findAvailablePort(this.startPort);
+                console.log(`[INFO] Tentando porta ${this.port}...`);
+                
                 // Criar servidor HTTP
                 this.server = http.createServer();
                 
@@ -45,10 +97,10 @@ class WebSocketServer {
                 // Iniciar servidor
                 this.server.listen(this.port, (err) => {
                     if (err) {
-                        console.error('❌ Erro ao iniciar servidor WebSocket:', err);
+                        console.error('[ERROR] Erro ao iniciar servidor WebSocket:', err);
                         reject(err);
                     } else {
-                        console.log(`🚀 Servidor WebSocket iniciado na porta ${this.port}`);
+                        console.log(`[SUCCESS] Servidor WebSocket iniciado na porta ${this.port}`);
                         this.isRunning = true;
                         this.startTime = Date.now();
                         resolve(true);
@@ -57,12 +109,12 @@ class WebSocketServer {
 
                 // Tratar erros do servidor
                 this.server.on('error', (err) => {
-                    console.error('❌ Erro no servidor WebSocket:', err);
+                    console.error('[ERROR] Erro no servidor WebSocket:', err);
                     reject(err);
                 });
 
             } catch (error) {
-                console.error('❌ Erro ao inicializar servidor WebSocket:', error);
+                console.error('[ERROR] Erro ao inicializar servidor WebSocket:', error);
                 reject(error);
             }
         });
@@ -73,7 +125,7 @@ class WebSocketServer {
      */
     setupEvents() {
         this.io.on('connection', (socket) => {
-            console.log(`🔗 Nova conexão: ${socket.id}`);
+            console.log(`[CONNECT] Nova conexão: ${socket.id}`);
             this.stats.connections++;
             this.stats.totalConnections++;
 
@@ -133,9 +185,12 @@ class WebSocketServer {
     /**
      * Manipular autenticação de usuário
      */
-    handleAuthentication(socket, data) {
+    async handleAuthentication(socket, data) {
         try {
             const { userId, userName, displayName } = data;
+            
+            // Salvar usuário no banco de dados
+            await this.db.createUser(userId, userName, displayName);
             
             // Armazenar dados do usuário
             socket.userId = userId;
@@ -151,10 +206,16 @@ class WebSocketServer {
                 connectedAt: new Date()
             });
 
+            // Buscar dados do usuário do banco
+            const userData = await this.db.getUser(userId);
+            const notifications = await this.db.getNotifications(userId);
+
             // Confirmar autenticação
             socket.emit('authenticated', {
                 success: true,
                 userId,
+                userData,
+                notifications,
                 connectedUsers: Array.from(this.connectedUsers.values())
             });
 
@@ -165,11 +226,11 @@ class WebSocketServer {
                 displayName
             });
 
-            console.log(`✅ Usuário autenticado: ${displayName} (${userId})`);
+            console.log(`[AUTH] Usuário autenticado: ${displayName} (${userId})`);
             this.stats.messagesReceived++;
             this.stats.messagesSent++;
         } catch (error) {
-            console.error('❌ Erro na autenticação:', error);
+            console.error('[ERROR] Erro na autenticação:', error);
             socket.emit('authentication:error', {
                 message: 'Erro interno do servidor'
             });
@@ -177,9 +238,9 @@ class WebSocketServer {
     }
 
     /**
-     * Manipular atualização de agendamento
+     * Manipular atualização de agendamento com resolução de conflitos
      */
-    handleAgendamentoUpdate(socket, action, data) {
+    async handleAgendamentoUpdate(socket, action, data) {
         try {
             const updateData = {
                 action,
@@ -190,23 +251,96 @@ class WebSocketServer {
                 timestamp: new Date()
             };
 
+            // Verificar se há conflitos
+            if (action === 'update') {
+                const existingAppointment = await this.db.getAppointment(data.agendamento.id);
+                
+                if (existingAppointment) {
+                    const conflicts = this.conflictResolver.detectConflict(
+                        existingAppointment,
+                        data.agendamento,
+                        data.agendamento
+                    );
+
+                    if (conflicts) {
+                        console.log(`[CONFLICT] Conflito detectado para agendamento ${data.agendamento.id}`);
+                        this.stats.conflicts++;
+                        
+                        // Resolver conflito automaticamente
+                        const strategy = this.conflictResolver.suggestStrategy(conflicts, {
+                            currentTimestamp: existingAppointment.updated_at,
+                            incomingTimestamp: new Date()
+                        });
+                        
+                        const resolution = await this.conflictResolver.resolveConflict(conflicts, strategy);
+                        const resolvedAppointment = this.conflictResolver.applyResolution(data.agendamento, resolution);
+                        
+                        // Atualizar dados com resolução
+                        updateData.agendamento = resolvedAppointment;
+                        updateData.conflictResolution = resolution;
+                        
+                        // Notificar sobre conflito resolvido
+                        socket.emit('conflict:resolved', {
+                            appointmentId: data.agendamento.id,
+                            resolution: resolution
+                        });
+                    }
+                }
+            }
+
+            // Persistir no banco de dados
+            switch (action) {
+                case 'create':
+                    await this.db.createAppointment(data.agendamento);
+                    break;
+                case 'update':
+                    await this.db.updateAppointment(updateData.agendamento);
+                    break;
+                case 'delete':
+                    await this.db.deleteAppointment(data.agendamento.id, socket.userId);
+                    break;
+            }
+
+            // Salvar no cache offline
+            this.cache.saveToCache(`appointment_${data.agendamento.id}`, updateData.agendamento);
+
             // Enviar para todos os outros usuários conectados
             socket.broadcast.emit('agendamento:update', updateData);
 
-            console.log(`📅 Agendamento ${action} por ${socket.displayName}`);
+            console.log(`[APPOINTMENT] Agendamento ${action} por ${socket.displayName}`);
             this.stats.messagesReceived++;
             this.stats.messagesSent += this.stats.connections - 1;
         } catch (error) {
-            console.error('❌ Erro ao processar atualização de agendamento:', error);
+            console.error('[ERROR] Erro ao processar atualização de agendamento:', error);
+            
+            // Se falhou, salvar como ação pendente
+            this.cache.addPendingAction({
+                type: 'agendamento:update',
+                data: { action, agendamento: data.agendamento, userId: socket.userId }
+            });
         }
     }
 
     /**
      * Manipular compartilhamento de agendamento
      */
-    handleAgendamentoShared(socket, data) {
+    async handleAgendamentoShared(socket, data) {
         try {
             const { toUserId, agendamento, fromUser, message } = data;
+
+            // Atualizar agendamento no banco com compartilhamento
+            agendamento.sharedWith = toUserId;
+            await this.db.updateAppointment(agendamento);
+
+            // Criar notificação para o usuário destinatário
+            await this.db.createNotification({
+                id: `notif_${Date.now()}_${Math.random()}`,
+                userId: toUserId,
+                fromUserId: socket.userId,
+                title: 'Agendamento Compartilhado',
+                message: `${socket.displayName} compartilhou um agendamento com você`,
+                type: 'share'
+            });
 
             // Encontrar socket do usuário destinatário
             const targetSocket = this.findSocketByUserId(toUserId);
@@ -222,23 +356,46 @@ class WebSocketServer {
                     message
                 });
 
-                console.log(`📤 Agendamento compartilhado de ${socket.displayName} para usuário ${toUserId}`);
+                // Enviar notificação em tempo real
+                targetSocket.emit('notification:received', {
+                    notification: {
+                        id: `notif_${Date.now()}_${Math.random()}`,
+                        title: 'Agendamento Compartilhado',
+                        message: `${socket.displayName} compartilhou um agendamento com você`,
+                        type: 'share'
+                    },
+                    fromUser: {
+                        userId: socket.userId,
+                        userName: socket.userName,
+                        displayName: socket.displayName
+                    },
+                    timestamp: new Date()
+                });
+
+                console.log(`[SHARE] Agendamento compartilhado de ${socket.displayName} para usuário ${toUserId}`);
                 this.stats.messagesReceived++;
                 this.stats.messagesSent++;
             } else {
-                console.warn(`⚠️ Usuário ${toUserId} não encontrado para compartilhamento`);
+                console.warn(`[WARN] Usuário ${toUserId} não encontrado para compartilhamento`);
             }
         } catch (error) {
-            console.error('❌ Erro ao compartilhar agendamento:', error);
+            console.error('[ERROR] Erro ao compartilhar agendamento:', error);
         }
     }
 
     /**
      * Manipular envio de notificação
      */
-    handleNotificationSend(socket, data) {
+    async handleNotificationSend(socket, data) {
         try {
             const { toUserId, notification } = data;
+
+            // Salvar notificação no banco
+            await this.db.createNotification({
+                ...notification,
+                userId: toUserId,
+                fromUserId: socket.userId
+            });
 
             // Encontrar socket do usuário destinatário
             const targetSocket = this.findSocketByUserId(toUserId);
@@ -254,23 +411,26 @@ class WebSocketServer {
                     timestamp: new Date()
                 });
 
-                console.log(`🔔 Notificação enviada de ${socket.displayName} para usuário ${toUserId}`);
+                console.log(`[NOTIFICATION] Notificação enviada de ${socket.displayName} para usuário ${toUserId}`);
                 this.stats.messagesReceived++;
                 this.stats.messagesSent++;
             } else {
-                console.warn(`⚠️ Usuário ${toUserId} não encontrado para notificação`);
+                console.warn(`[WARN] Usuário ${toUserId} não encontrado para notificação`);
             }
         } catch (error) {
-            console.error('❌ Erro ao enviar notificação:', error);
+            console.error('[ERROR] Erro ao enviar notificação:', error);
         }
     }
 
     /**
      * Manipular marcação de notificação como lida
      */
-    handleNotificationRead(socket, data) {
+    async handleNotificationRead(socket, data) {
         try {
             const { notificationId } = data;
+
+            // Marcar como lida no banco
+            await this.db.markNotificationAsRead(notificationId);
 
             // Broadcast para outros clientes do mesmo usuário
             socket.broadcast.emit('notification:read', {
@@ -278,32 +438,59 @@ class WebSocketServer {
                 userId: socket.userId
             });
 
-            console.log(`✅ Notificação ${notificationId} marcada como lida por ${socket.displayName}`);
+            console.log(`[READ] Notificação marcada como lida por ${socket.displayName}`);
             this.stats.messagesReceived++;
+            this.stats.messagesSent++;
         } catch (error) {
-            console.error('❌ Erro ao marcar notificação como lida:', error);
+            console.error('[ERROR] Erro ao marcar notificação como lida:', error);
         }
     }
 
     /**
-     * Manipular solicitação de sincronização
+     * Manipular solicitação de sincronização com cache
      */
-    handleSyncRequest(socket) {
+    async handleSyncRequest(socket) {
         try {
-            // Simular dados de sincronização
+            // Buscar dados do banco
+            const appointments = await this.db.getAppointments(socket.userId);
+            const notifications = await this.db.getNotifications(socket.userId);
+            const syncLog = await this.db.getSyncLog();
+
+            // Verificar cache offline para dados adicionais
+            const cachedData = this.cache.loadFromCache(`user_${socket.userId}_data`);
+            
             const syncData = {
                 timestamp: new Date(),
+                appointments,
+                notifications,
+                syncLog,
+                cachedData,
                 connectedUsers: Array.from(this.connectedUsers.values()),
-                serverStats: this.getStats()
+                serverStats: this.getStats(),
+                cacheStats: this.cache.getCacheStats(),
+                conflictStats: this.conflictResolver.getConflictStats()
             };
 
             socket.emit('sync:response', syncData);
 
-            console.log(`🔄 Sincronização solicitada por ${socket.displayName}`);
+            console.log(`[SYNC] Sincronização solicitada por ${socket.displayName}`);
             this.stats.messagesReceived++;
             this.stats.messagesSent++;
         } catch (error) {
-            console.error('❌ Erro na sincronização:', error);
+            console.error('[ERROR] Erro na sincronização:', error);
+            
+            // Se falhou, usar dados do cache
+            const cachedData = this.cache.loadFromCache(`user_${socket.userId}_data`);
+            if (cachedData) {
+                socket.emit('sync:response', {
+                    timestamp: new Date(),
+                    appointments: cachedData.appointments || [],
+                    notifications: cachedData.notifications || [],
+                    fromCache: true,
+                    message: 'Dados carregados do cache offline'
+                });
+                this.stats.cacheHits++;
+            }
         }
     }
 
@@ -324,11 +511,11 @@ class WebSocketServer {
 
             socket.emit('search:results', results);
 
-            console.log(`🔍 Busca realizada por ${socket.displayName}: "${query}"`);
+            console.log(`[SEARCH] Busca realizada por ${socket.displayName}: "${query}"`);
             this.stats.messagesReceived++;
             this.stats.messagesSent++;
         } catch (error) {
-            console.error('❌ Erro na busca:', error);
+            console.error('[ERROR] Erro na busca:', error);
         }
     }
 
@@ -350,12 +537,12 @@ class WebSocketServer {
                     displayName: user.displayName
                 });
 
-                console.log(`🔌 Usuário desconectado: ${user.displayName} (${reason})`);
+                console.log(`[DISCONNECT] Usuário desconectado: ${user.displayName} (${reason})`);
             }
 
             this.stats.connections--;
         } catch (error) {
-            console.error('❌ Erro ao processar desconexão:', error);
+            console.error('[ERROR] Erro ao processar desconexão:', error);
         }
     }
 
@@ -372,6 +559,26 @@ class WebSocketServer {
     }
 
     /**
+     * Obter estatísticas completas
+     */
+    getStats() {
+        return {
+            ...this.stats,
+            cacheStats: this.cache.getCacheStats(),
+            conflictStats: this.conflictResolver.getConflictStats(),
+            databaseConnected: !!this.db,
+            cacheInitialized: !!this.cache
+        };
+    }
+
+    /**
+     * Verificar se o servidor está rodando
+     */
+    isServerRunning() {
+        return this.isRunning;
+    }
+
+    /**
      * Parar servidor WebSocket
      */
     stop() {
@@ -384,34 +591,18 @@ class WebSocketServer {
                 this.server.close();
             }
 
+            // Fechar conexão com banco de dados
+            if (this.db) {
+                this.db.close();
+            }
+
             this.isRunning = false;
             this.connectedUsers.clear();
             
-            console.log('🛑 Servidor WebSocket parado');
-            return true;
+            console.log('[STOP] Servidor WebSocket parado');
         } catch (error) {
-            console.error('❌ Erro ao parar servidor WebSocket:', error);
-            return false;
+            console.error('[ERROR] Erro ao parar servidor WebSocket:', error);
         }
-    }
-
-    /**
-     * Obter estatísticas do servidor
-     */
-    getStats() {
-        return {
-            ...this.stats,
-            isRunning: this.isRunning,
-            connectedUsers: this.connectedUsers.size,
-            uptime: this.isRunning ? Date.now() - this.startTime : 0
-        };
-    }
-
-    /**
-     * Verificar se o servidor está rodando
-     */
-    isServerRunning() {
-        return this.isRunning;
     }
 }
 

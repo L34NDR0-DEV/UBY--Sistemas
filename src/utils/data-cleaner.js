@@ -294,8 +294,19 @@ class DataCleaner {
         return new Promise((resolve) => {
             const message = `Tem certeza que deseja deletar ${count} agendamento${count !== 1 ? 's' : ''} permanentemente?\n\nEsta ação não pode ser desfeita.`;
             
-            const confirmed = confirm(message);
-            resolve(confirmed);
+            // Usar nossa versão personalizada do confirm
+            if (window.showCustomConfirm) {
+                window.showCustomConfirm(
+                    'Limpeza de Dados', 
+                    message, 
+                    () => resolve(true), 
+                    () => resolve(false)
+                );
+            } else {
+                // Fallback para confirm padrão se nossa versão não estiver disponível
+                const confirmed = confirm(message);
+                resolve(confirmed);
+            }
         });
     }
 

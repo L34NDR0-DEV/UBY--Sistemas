@@ -11,6 +11,11 @@
     -webkit-app-region: drag;
     display: flex;
     align-items: center;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+    transform: none !important;
+    transition: none !important;
 }
 
 .window-bar-content {
@@ -20,12 +25,22 @@
     width: 100%;
     height: 100%;
     padding: 0 15px;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+    transform: none !important;
+    transition: none !important;
 }
 
 .window-bar-left {
     display: flex;
     align-items: center;
     -webkit-app-region: drag;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+    transform: none !important;
+    transition: none !important;
 }
 
 .window-title {
@@ -34,6 +49,11 @@
     color: #333333;
     -webkit-app-region: drag;
     user-select: none;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+    transform: none !important;
+    transition: none !important;
 }
 
 /* Variáveis CSS para tema */
@@ -84,6 +104,32 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+}
+
+/* Remover sombras globais para elementos específicos */
+.window-bar,
+.window-bar *,
+.window-controls,
+.window-controls *,
+.window-btn,
+.window-btn * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+    transform: none !important;
+    transition: none !important;
+}
+
+/* Garantir que não há efeitos de hover em elementos da janela */
+.window-bar:hover,
+.window-controls:hover,
+.window-btn:hover,
+.window-btn:hover * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+    transform: none !important;
+    transition: none !important;
 }
 
 body {
@@ -143,6 +189,9 @@ body {
     transition: none !important;
     transform: none !important;
     box-shadow: none !important;
+    filter: none !important;
+    text-shadow: none !important;
+    outline: none !important;
 }
 
 .window-btn:hover {
@@ -151,6 +200,9 @@ body {
     transform: none !important;
     box-shadow: none !important;
     transition: none !important;
+    filter: none !important;
+    text-shadow: none !important;
+    outline: none !important;
 }
 
 .window-btn:active {
@@ -159,6 +211,9 @@ body {
     transform: none !important;
     box-shadow: none !important;
     transition: none !important;
+    filter: none !important;
+    text-shadow: none !important;
+    outline: none !important;
 }
 
 .window-btn:focus {
@@ -168,6 +223,8 @@ body {
     box-shadow: none !important;
     outline: none !important;
     transition: none !important;
+    filter: none !important;
+    text-shadow: none !important;
 }
 
 .minimize-btn:hover,
@@ -178,6 +235,9 @@ body {
     transform: none !important;
     box-shadow: none !important;
     transition: none !important;
+    filter: none !important;
+    text-shadow: none !important;
+    outline: none !important;
 }
 
 .minimize-btn:active,
@@ -188,6 +248,40 @@ body {
     transform: none !important;
     box-shadow: none !important;
     transition: none !important;
+    filter: none !important;
+    text-shadow: none !important;
+    outline: none !important;
+}
+
+.minimize-btn:focus,
+.maximize-btn:focus,
+.close-btn:focus {
+    background: transparent !important;
+    color: #666666 !important;
+    transform: none !important;
+    box-shadow: none !important;
+    transition: none !important;
+    filter: none !important;
+    text-shadow: none !important;
+    outline: none !important;
+}
+
+/* Remover qualquer sombra dos ícones dentro dos botões */
+.window-btn svg,
+.window-btn i {
+    filter: none !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+/* Garantir que não há efeitos de hover nos ícones */
+.window-btn:hover svg,
+.window-btn:hover i {
+    filter: none !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+    transform: none !important;
 }
 
 .header-left {
@@ -3292,6 +3386,187 @@ input:checked + .toggle-slider:before {
     100% {
         transform: scale(1);
         opacity: 1;
+    }
+}
+
+/* Modal de Confirmação Personalizado */
+.confirm-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.confirm-modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.confirm-modal-content {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 0;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+    border: 1px solid var(--border-color);
+}
+
+.confirm-modal.show .confirm-modal-content {
+    transform: scale(1);
+}
+
+.confirm-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 24px 24px 16px 24px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.confirm-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    flex-shrink: 0;
+}
+
+.confirm-icon svg {
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+}
+
+.confirm-title {
+    flex: 1;
+    min-width: 0;
+}
+
+.confirm-title h3 {
+    margin: 0 0 4px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.confirm-title p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.confirm-actions {
+    display: flex;
+    gap: 12px;
+    padding: 16px 24px 24px 24px;
+    justify-content: flex-end;
+}
+
+.confirm-actions .btn-secondary,
+.confirm-actions .btn-primary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    min-width: 100px;
+    justify-content: center;
+}
+
+.confirm-actions .btn-secondary {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.confirm-actions .btn-secondary:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+.confirm-actions .btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.confirm-actions .btn-primary:hover {
+    background: var(--primary-hover);
+}
+
+.confirm-actions .btn-secondary svg,
+.confirm-actions .btn-primary svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+}
+
+/* Tema escuro para o modal de confirmação */
+[data-theme="dark"] .confirm-modal-content {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .confirm-header {
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .confirm-actions .btn-secondary {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .confirm-actions .btn-secondary:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+/* Responsividade */
+@media (max-width: 480px) {
+    .confirm-modal-content {
+        width: 95%;
+        margin: 20px;
+    }
+    
+    .confirm-header {
+        padding: 20px 20px 12px 20px;
+    }
+    
+    .confirm-actions {
+        padding: 12px 20px 20px 20px;
+        flex-direction: column;
+    }
+    
+    .confirm-actions .btn-secondary,
+    .confirm-actions .btn-primary {
+        width: 100%;
     }
 }
 

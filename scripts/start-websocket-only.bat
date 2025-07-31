@@ -1,6 +1,6 @@
 @echo off
 echo ========================================
-echo    Jelly Beans - Sistema WebSocket
+echo    Jelly Beans - Servidor WebSocket
 echo ========================================
 echo.
 
@@ -26,27 +26,15 @@ if %errorlevel% equ 0 (
 )
 
 echo [3/4] Iniciando servidor WebSocket automatico...
-start "Servidor WebSocket Auto" cmd /k "npm run auto-websocket"
-
-echo [4/4] Aguardando servidor inicializar...
-timeout /t 5 /nobreak >nul
-
 echo.
-echo ========================================
-echo    Sistema iniciado com sucesso!
-echo ========================================
-echo.
-echo Servidor WebSocket: http://localhost:3002
+echo Servidor sera iniciado em: http://localhost:3002
 echo Status: http://localhost:3002/status
-echo Teste: test-websocket.html
 echo.
-echo Para iniciar a aplicacao Electron:
-echo npm run dev
+echo Para parar o servidor, pressione Ctrl+C
 echo.
-echo Para iniciar tudo junto (servidor + app):
-echo npm run dev-with-auto
+
+node src/server/auto-start-websocket.js
+
 echo.
-echo Para parar o servidor, feche a janela do servidor
-echo ou pressione Ctrl+C
-echo.
+echo Servidor WebSocket parado.
 pause 

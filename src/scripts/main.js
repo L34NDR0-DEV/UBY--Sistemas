@@ -1000,10 +1000,97 @@ function testTTS() {
 
 // Logout
 function handleLogout() {
-    if (confirm('Tem certeza que deseja sair?')) {
+    showCustomConfirm('Sair do Sistema', 'Tem certeza que deseja sair?', () => {
         ipcRenderer.invoke('logout');
-    }
+    });
 }
+
+// Função de confirmação personalizada
+function showCustomConfirm(title, message, onConfirm, onCancel = null) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('confirmModal');
+        const titleElement = document.getElementById('confirmTitle');
+        const messageElement = document.getElementById('confirmMessage');
+        const okBtn = document.getElementById('confirmOkBtn');
+        const cancelBtn = document.getElementById('confirmCancelBtn');
+        
+        if (!modal || !titleElement || !messageElement || !okBtn || !cancelBtn) {
+            console.error('Elementos do modal de confirmação não encontrados');
+            resolve(false);
+            return;
+        }
+        
+        // Configurar conteúdo
+        titleElement.textContent = title;
+        messageElement.textContent = message;
+        
+        // Mostrar modal
+        modal.classList.add('show');
+        
+        // Função para fechar modal
+        const closeModal = (result) => {
+            modal.classList.remove('show');
+            resolve(result);
+            
+            if (result && onConfirm) {
+                onConfirm();
+            } else if (!result && onCancel) {
+                onCancel();
+            }
+        };
+        
+        // Event listeners
+        const handleOk = () => {
+            closeModal(true);
+        };
+        
+        const handleCancel = () => {
+            closeModal(false);
+        };
+        
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                handleCancel();
+            }
+        };
+        
+        const handleOutsideClick = (e) => {
+            if (e.target === modal) {
+                handleCancel();
+            }
+        };
+        
+        // Adicionar event listeners
+        okBtn.addEventListener('click', handleOk, { once: true });
+        cancelBtn.addEventListener('click', handleCancel, { once: true });
+        document.addEventListener('keydown', handleEscape);
+        modal.addEventListener('click', handleOutsideClick);
+        
+        // Focar no botão cancelar por padrão
+        cancelBtn.focus();
+        
+        // Limpar event listeners quando modal fechar
+        const cleanup = () => {
+            document.removeEventListener('keydown', handleEscape);
+            modal.removeEventListener('click', handleOutsideClick);
+        };
+        
+        // Adicionar cleanup ao fechar
+        const originalCloseModal = closeModal;
+        closeModal = (result) => {
+            cleanup();
+            originalCloseModal(result);
+        };
+    });
+}
+
+// Substituir confirm() padrão por nossa versão personalizada
+window.confirm = function(message) {
+    return showCustomConfirm('Confirmação', message);
+};
+
+// Tornar a função global para uso em outros arquivos
+window.showCustomConfirm = showCustomConfirm;
 
 // Verificar agendamentos esquecidos periodicamente
 setInterval(() => {
@@ -2171,19 +2258,22 @@ async function confirmClearData() {
         }
 
         // Confirmar ação (exceto para limpeza automática)
-        if (confirmMessage && !confirm(confirmMessage)) {
-            // Restaurar botão
-            button.disabled = false;
-            button.innerHTML = `
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M10 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M14 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                Limpar Dados
-            `;
-            return;
+        if (confirmMessage) {
+            const confirmed = await showCustomConfirm('Limpeza de Dados', confirmMessage);
+            if (!confirmed) {
+                // Restaurar botão
+                button.disabled = false;
+                button.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M10 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M14 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Limpar Dados
+                `;
+                return;
+            }
         }
 
         // Usar a instância global do data cleaner
@@ -2266,6 +2356,22 @@ async function initializeWebSocket() {
 
         console.log('[INFO] Tentando conectar ao WebSocket...');
         
+        // Primeiro, verificar se o servidor está rodando
+        const isServerRunning = await checkWebSocketServer();
+        
+        if (!isServerRunning) {
+            console.log('[INFO] Servidor WebSocket não está rodando, tentando iniciar automaticamente...');
+            
+            // Tentar iniciar o servidor automaticamente
+            const serverStarted = await startWebSocketServer();
+            
+            if (!serverStarted) {
+                console.warn('[WARNING] Não foi possível iniciar o servidor WebSocket automaticamente');
+                safeShowToast('Modo offline - servidor WebSocket não disponível', 'warning');
+                return;
+            }
+        }
+        
         // Conectar ao servidor com retry
         const connected = await connectWithRetry();
         
@@ -2289,6 +2395,52 @@ async function initializeWebSocket() {
     } catch (error) {
         console.error('[ERROR] Erro ao inicializar WebSocket:', error);
         safeShowToast('Erro de conexão - funcionando em modo offline', 'warning');
+    }
+}
+
+// Verificar se o servidor WebSocket está rodando
+async function checkWebSocketServer() {
+    return new Promise((resolve) => {
+        // Usar fetch para verificar se o servidor está respondendo
+        fetch('http://localhost:3002/status', {
+            method: 'GET',
+            mode: 'no-cors', // Para evitar problemas de CORS
+            cache: 'no-cache'
+        })
+        .then(response => {
+            console.log('[INFO] Servidor WebSocket está respondendo');
+            resolve(true);
+        })
+        .catch(error => {
+            console.log('[INFO] Servidor WebSocket não está respondendo:', error.message);
+            resolve(false);
+        });
+        
+        // Timeout de 3 segundos
+        setTimeout(() => {
+            resolve(false);
+        }, 3000);
+    });
+}
+
+// Iniciar servidor WebSocket automaticamente
+async function startWebSocketServer() {
+    try {
+        console.log('[INFO] Iniciando servidor WebSocket automaticamente...');
+        
+        // Usar IPC para comunicar com o processo principal do Electron
+        const result = await window.ipcRenderer.invoke('startWebSocketServer');
+        
+        if (result && result.success) {
+            console.log('[SUCCESS] Servidor WebSocket iniciado automaticamente');
+            return true;
+        } else {
+            console.error('[ERROR] Falha ao iniciar servidor WebSocket:', result?.error || 'Erro desconhecido');
+            return false;
+        }
+    } catch (error) {
+        console.error('[ERROR] Erro ao iniciar servidor WebSocket:', error);
+        return false;
     }
 }
 

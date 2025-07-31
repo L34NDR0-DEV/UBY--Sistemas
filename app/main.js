@@ -357,6 +357,49 @@ ipcMain.handle('logout', async () => {
   return { success: true };
 });
 
+// Handler para registro de novos usuários
+ipcMain.handle('register', async (event, userData) => {
+  const { username, displayName, password } = userData;
+  
+  try {
+    // Carregar usuários existentes
+    const usersData = loadUsers();
+    
+    // Verificar se o usuário já existe
+    const existingUser = usersData.users.find(u => 
+      u.username.toLowerCase() === username.toLowerCase()
+    );
+    
+    if (existingUser) {
+      return { success: false, message: 'Nome de usuário já existe' };
+    }
+    
+    // Criar novo usuário
+    const newUser = {
+      id: Date.now().toString(),
+      username: username,
+      displayName: displayName,
+      password: password,
+      createdAt: new Date().toISOString(),
+      role: 'user'
+    };
+    
+    // Adicionar à lista de usuários
+    usersData.users.push(newUser);
+    
+    // Salvar no arquivo JSON
+    const usersPath = path.join(__dirname, '..', 'src', 'data', 'users.json');
+    fs.writeFileSync(usersPath, JSON.stringify(usersData, null, 2), 'utf8');
+    
+    console.log(`[INFO] Novo usuário registrado: ${username}`);
+    
+    return { success: true, message: 'Usuário criado com sucesso' };
+  } catch (error) {
+    console.error('[ERROR] Erro ao registrar usuário:', error);
+    return { success: false, message: 'Erro interno do sistema' };
+  }
+});
+
 ipcMain.handle('getCurrentUser', async () => {
   return store.get('currentUser', null);
 });
@@ -873,7 +916,56 @@ async function initializeWebSocketServer() {
       return true;
     }
     
+    // Verificar se já há um servidor rodando na porta 3002
+    const net = require('net');
+    const isPortInUse = () => {
+      return new Promise((resolve) => {
+        const socket = net.createConnection(3002, 'localhost');
+        socket.on('connect', () => {
+          socket.destroy();
+          resolve(true);
+        });
+        socket.on('error', () => {
+          resolve(false);
+        });
+        socket.setTimeout(2000, () => {
+          socket.destroy();
+          resolve(false);
+        });
+      });
+    };
+    
+    const portInUse = await isPortInUse();
+    if (portInUse) {
+      console.log('[INFO] Servidor WebSocket já está rodando na porta 3002');
+      
+      // Verificar se está respondendo corretamente
+      const http = require('http');
+      const isHealthy = () => {
+        return new Promise((resolve) => {
+          const req = http.get('http://localhost:3002/status', (res) => {
+            resolve(res.statusCode === 200);
+          });
+          req.on('error', () => resolve(false));
+          req.setTimeout(3000, () => {
+            req.destroy();
+            resolve(false);
+          });
+        });
+      };
+      
+      const healthy = await isHealthy();
+      if (healthy) {
+        console.log('[SUCCESS] Servidor WebSocket externo está funcionando corretamente');
+        global.websocketPort = 3002;
+        return true;
+      } else {
+        console.log('[WARNING] Servidor na porta 3002 não está respondendo corretamente');
+      }
+    }
+    
     // Tentar iniciar o servidor na porta 3002
+    console.log('[INFO] Tentando iniciar servidor WebSocket interno...');
     wsServer = new WebSocketServer(3002);
     const started = await wsServer.start();
     
@@ -884,44 +976,52 @@ async function initializeWebSocketServer() {
       global.websocketPort = wsServer.port;
       
       // Aguardar um pouco para garantir que o servidor esteja pronto
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
       return true;
     } else {
-      console.error('[ERROR] Falha ao iniciar servidor WebSocket');
-      return false;
+      console.error('[ERROR] Falha ao iniciar servidor WebSocket interno');
+      
+      // Tentar usar o servidor simples como fallback
+      try {
+        console.log('[INFO] Tentando usar servidor WebSocket simples como fallback...');
+        const { spawn } = require('child_process');
+        
+        // Iniciar servidor simples em processo separado
+        const serverProcess = spawn('node', ['src/server/server.js'], {
+          stdio: 'pipe',
+          detached: false,
+          cwd: path.join(__dirname, '..')
+        });
+        
+        serverProcess.stdout.on('data', (data) => {
+          console.log('[WEBSOCKET]', data.toString().trim());
+        });
+        
+        serverProcess.stderr.on('data', (data) => {
+          console.error('[WEBSOCKET ERROR]', data.toString().trim());
+        });
+        
+        // Aguardar servidor estar pronto
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        // Verificar se está funcionando
+        const isWorking = await isPortInUse();
+        if (isWorking) {
+          console.log('[SUCCESS] Servidor WebSocket simples iniciado como fallback');
+          global.websocketPort = 3002;
+          return true;
+        } else {
+          throw new Error('Servidor fallback não iniciou corretamente');
+        }
+      } catch (fallbackError) {
+        console.error('[ERROR] Falha no fallback do servidor WebSocket:', fallbackError);
+        return false;
+      }
     }
   } catch (error) {
     console.error('[ERROR] Erro ao inicializar servidor WebSocket:', error);
-    
-    // Tentar usar o servidor simples como fallback
-    try {
-      console.log('[INFO] Tentando usar servidor WebSocket simples como fallback...');
-      const { spawn } = require('child_process');
-      
-      // Iniciar servidor simples em processo separado
-      const serverProcess = spawn('node', ['server.js'], {
-        stdio: 'pipe',
-        detached: false
-      });
-      
-      serverProcess.stdout.on('data', (data) => {
-        console.log('[WEBSOCKET]', data.toString().trim());
-      });
-      
-      serverProcess.stderr.on('data', (data) => {
-        console.error('[WEBSOCKET ERROR]', data.toString().trim());
-      });
-      
-      // Aguardar servidor estar pronto
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      console.log('[SUCCESS] Servidor WebSocket simples iniciado como fallback');
-      return true;
-    } catch (fallbackError) {
-      console.error('[ERROR] Falha no fallback do servidor WebSocket:', fallbackError);
-      return false;
-    }
+    return false;
   }
 }
 
@@ -992,6 +1092,84 @@ ipcMain.handle('restartWebSocketServer', async () => {
     return { success: true };
   } catch (error) {
     console.error('❌ Erro ao reiniciar servidor WebSocket:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Handler para iniciar servidor WebSocket
+ipcMain.handle('startWebSocketServer', async () => {
+  try {
+    console.log('[INFO] Iniciando servidor WebSocket via IPC...');
+    
+    // Verificar se já está rodando
+    const net = require('net');
+    const isPortInUse = () => {
+      return new Promise((resolve) => {
+        const socket = net.createConnection(3002, 'localhost');
+        socket.on('connect', () => {
+          socket.destroy();
+          resolve(true);
+        });
+        socket.on('error', () => {
+          resolve(false);
+        });
+        socket.setTimeout(2000, () => {
+          socket.destroy();
+          resolve(false);
+        });
+      });
+    };
+    
+    const portInUse = await isPortInUse();
+    if (portInUse) {
+      console.log('[INFO] Servidor WebSocket já está rodando na porta 3002');
+      return { success: true, message: 'Servidor já está rodando' };
+    }
+    
+    // Iniciar servidor usando auto-start-websocket.js
+    const { spawn } = require('child_process');
+    const path = require('path');
+    
+    const serverProcess = spawn('node', ['src/server/auto-start-websocket.js'], {
+      stdio: 'pipe',
+      detached: false,
+      cwd: path.join(__dirname, '..')
+    });
+    
+    return new Promise((resolve) => {
+      let started = false;
+      
+      serverProcess.stdout.on('data', (data) => {
+        const output = data.toString().trim();
+        console.log('[WEBSOCKET]', output);
+        
+        if (output.includes('Servidor WebSocket iniciado automaticamente') && !started) {
+          started = true;
+          console.log('[SUCCESS] Servidor WebSocket iniciado via IPC');
+          resolve({ success: true, message: 'Servidor iniciado com sucesso' });
+        }
+      });
+      
+      serverProcess.stderr.on('data', (data) => {
+        console.error('[WEBSOCKET ERROR]', data.toString().trim());
+      });
+      
+      serverProcess.on('error', (error) => {
+        console.error('[ERROR] Erro ao iniciar servidor via IPC:', error);
+        resolve({ success: false, error: error.message });
+      });
+      
+      // Timeout de 15 segundos
+      setTimeout(() => {
+        if (!started) {
+          serverProcess.kill('SIGTERM');
+          resolve({ success: false, error: 'Timeout ao iniciar servidor' });
+        }
+      }, 15000);
+    });
+    
+  } catch (error) {
+    console.error('[ERROR] Erro ao iniciar servidor WebSocket via IPC:', error);
     return { success: false, error: error.message };
   }
 });

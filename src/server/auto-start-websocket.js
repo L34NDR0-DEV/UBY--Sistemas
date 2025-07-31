@@ -6,13 +6,15 @@
 const { spawn } = require('child_process');
 const net = require('net');
 const path = require('path');
+const http = require('http');
 
 class WebSocketAutoStarter {
     constructor() {
         this.serverProcess = null;
         this.port = 3002;
-        this.maxRetries = 3;
-        this.retryDelay = 2000;
+        this.maxRetries = 5;
+        this.retryDelay = 3000;
+        this.healthCheckInterval = 10000;
     }
 
     /**
@@ -24,15 +26,46 @@ class WebSocketAutoStarter {
             
             socket.on('connect', () => {
                 socket.destroy();
+                console.log(`[INFO] Servidor detectado na porta ${this.port}`);
                 resolve(true);
             });
             
             socket.on('error', () => {
+                console.log(`[INFO] Nenhum servidor encontrado na porta ${this.port}`);
                 resolve(false);
             });
             
-            socket.setTimeout(1000, () => {
+            socket.setTimeout(2000, () => {
                 socket.destroy();
+                console.log(`[INFO] Timeout ao verificar porta ${this.port}`);
+                resolve(false);
+            });
+        });
+    }
+
+    /**
+     * Verificar se o servidor está respondendo corretamente
+     */
+    async isServerHealthy() {
+        return new Promise((resolve) => {
+            const req = http.get(`http://localhost:${this.port}/status`, (res) => {
+                if (res.statusCode === 200) {
+                    console.log(`[INFO] Servidor na porta ${this.port} está saudável`);
+                    resolve(true);
+                } else {
+                    console.log(`[WARNING] Servidor na porta ${this.port} respondeu com status ${res.statusCode}`);
+                    resolve(false);
+                }
+            });
+            
+            req.on('error', (error) => {
+                console.log(`[INFO] Servidor na porta ${this.port} não está respondendo: ${error.message}`);
+                resolve(false);
+            });
+            
+            req.setTimeout(3000, () => {
+                req.destroy();
+                console.log(`[INFO] Timeout ao verificar saúde do servidor na porta ${this.port}`);
                 resolve(false);
             });
         });
@@ -55,6 +88,7 @@ class WebSocketAutoStarter {
             });
             
             let started = false;
+            let healthCheckPassed = false;
             
             this.serverProcess.stdout.on('data', (data) => {
                 const output = data.toString().trim();
@@ -64,7 +98,19 @@ class WebSocketAutoStarter {
                 if (output.includes('Servidor WebSocket iniciado') && !started) {
                     started = true;
                     console.log(`[SUCCESS] Servidor WebSocket iniciado automaticamente na porta ${this.port}`);
-                    resolve(true);
+                    
+                    // Aguardar um pouco e verificar se está saudável
+                    setTimeout(async () => {
+                        const isHealthy = await this.isServerHealthy();
+                        if (isHealthy) {
+                            healthCheckPassed = true;
+                            console.log(`[SUCCESS] Servidor WebSocket está respondendo corretamente`);
+                            resolve(true);
+                        } else {
+                            console.log(`[WARNING] Servidor iniciou mas não está respondendo corretamente`);
+                            resolve(true); // Ainda considerar sucesso se iniciou
+                        }
+                    }, 3000);
                 }
             });
             
@@ -91,7 +137,7 @@ class WebSocketAutoStarter {
                     console.error('[ERROR] Timeout ao iniciar servidor WebSocket');
                     reject(new Error('Timeout ao iniciar servidor'));
                 }
-            }, 10000);
+            }, 15000);
         });
     }
 
@@ -118,18 +164,71 @@ class WebSocketAutoStarter {
                 const isRunning = await this.isServerRunning();
                 if (isRunning) {
                     console.log(`[SUCCESS] Servidor WebSocket já está rodando na porta ${this.port}`);
-                    return true;
+                    
+                    // Verificar se está saudável
+                    const isHealthy = await this.isServerHealthy();
+                    if (isHealthy) {
+                        console.log(`[SUCCESS] Servidor WebSocket está funcionando corretamente`);
+                        return true;
+                    } else {
+                        console.log(`[WARNING] Servidor está rodando mas não está respondendo corretamente`);
+                        // Se não está saudável, tentar reiniciar
+                        console.log(`[INFO] Tentando reiniciar servidor não saudável...`);
+                        this.stopServer();
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+                }
+                
+                // Verificar se há outro processo usando a porta
+                console.log(`[INFO] Verificando se há outro processo usando a porta ${this.port}...`);
+                const { exec } = require('child_process');
+                const checkPort = () => {
+                    return new Promise((resolve) => {
+                        const command = process.platform === 'win32' 
+                            ? `netstat -ano | findstr :${this.port}` 
+                            : `lsof -i :${this.port}`;
+                        
+                        exec(command, (error, stdout) => {
+                            if (stdout && stdout.trim()) {
+                                console.log(`[WARNING] Porta ${this.port} está sendo usada por outro processo`);
+                                console.log(`[INFO] Processos na porta ${this.port}:`, stdout.trim());
+                                resolve(true);
+                            } else {
+                                console.log(`[INFO] Porta ${this.port} está livre`);
+                                resolve(false);
+                            }
+                        });
+                    });
+                };
+                
+                const portInUse = await checkPort();
+                if (portInUse) {
+                    console.log(`[INFO] Aguardando porta ${this.port} ficar livre...`);
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                    
+                    // Verificar novamente se ainda está em uso
+                    const stillInUse = await checkPort();
+                    if (stillInUse) {
+                        console.log(`[WARNING] Porta ${this.port} ainda está em uso, tentando próxima tentativa`);
+                        continue;
+                    }
                 }
                 
                 // Iniciar servidor
+                console.log(`[INFO] Iniciando servidor na porta ${this.port}...`);
                 await this.startServer();
                 
                 // Aguardar um pouco e verificar se realmente iniciou
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                await new Promise(resolve => setTimeout(resolve, 3000));
                 
                 const isNowRunning = await this.isServerRunning();
-                if (isNowRunning) {
+                const isNowHealthy = await this.isServerHealthy();
+                
+                if (isNowRunning && isNowHealthy) {
                     console.log(`[SUCCESS] Servidor WebSocket iniciado com sucesso na porta ${this.port}`);
+                    return true;
+                } else if (isNowRunning) {
+                    console.log(`[WARNING] Servidor iniciou mas pode não estar totalmente funcional`);
                     return true;
                 } else {
                     throw new Error('Servidor não respondeu após inicialização');
@@ -159,13 +258,14 @@ class WebSocketAutoStarter {
         
         setInterval(async () => {
             const isRunning = await this.isServerRunning();
+            const isHealthy = await this.isServerHealthy();
             
-            if (!isRunning && this.serverProcess) {
-                console.log('[WARN] Servidor WebSocket parou, tentando reiniciar...');
+            if (!isRunning || !isHealthy) {
+                console.log('[WARN] Servidor WebSocket parou ou não está saudável, tentando reiniciar...');
                 this.stopServer();
                 await this.initializeWithRetry();
             }
-        }, 30000); // Verificar a cada 30 segundos
+        }, this.healthCheckInterval);
     }
 }
 

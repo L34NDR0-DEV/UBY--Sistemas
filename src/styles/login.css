@@ -69,29 +69,57 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
     background: transparent;
     color: #666666;
     -webkit-app-region: no-drag;
+    transition: none !important;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
 .window-btn:hover {
-    background: rgba(0, 0, 0, 0.1);
+    background: transparent !important;
+    color: #666666 !important;
+    transform: none !important;
+    box-shadow: none !important;
+    transition: none !important;
 }
 
-.window-btn.close-btn:hover {
-    background: #ff5f56;
-    color: white;
+.window-btn:active {
+    background: transparent !important;
+    color: #666666 !important;
+    transform: none !important;
+    box-shadow: none !important;
+    transition: none !important;
 }
 
-.window-btn.maximize-btn:hover {
-    background: #ffbd2e;
-    color: white;
+.window-btn:focus {
+    background: transparent !important;
+    color: #666666 !important;
+    transform: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    transition: none !important;
 }
 
-.window-btn.minimize-btn:hover {
-    background: #27ca3f;
-    color: white;
+.minimize-btn:hover,
+.maximize-btn:hover,
+.close-btn:hover {
+    background: transparent !important;
+    color: #666666 !important;
+    transform: none !important;
+    box-shadow: none !important;
+    transition: none !important;
+}
+
+.minimize-btn:active,
+.maximize-btn:active,
+.close-btn:active {
+    background: transparent !important;
+    color: #666666 !important;
+    transform: none !important;
+    box-shadow: none !important;
+    transition: none !important;
 }
 
 .login-container {

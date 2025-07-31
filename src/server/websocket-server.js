@@ -21,13 +21,18 @@ class WebSocketServer {
         this.conflictResolver = new ConflictResolver();
         this.connectedUsers = new Map();
         this.isRunning = false;
+        this.syncInterval = null;
+        this.lastSyncTime = new Date();
+        this.pendingUpdates = new Map();
         this.stats = {
             connections: 0,
             totalConnections: 0,
             messagesReceived: 0,
             messagesSent: 0,
             conflicts: 0,
-            cacheHits: 0
+            cacheHits: 0,
+            syncCount: 0,
+            updatesBroadcasted: 0
         };
     }
 
@@ -103,6 +108,10 @@ class WebSocketServer {
                         console.log(`[SUCCESS] Servidor WebSocket iniciado na porta ${this.port}`);
                         this.isRunning = true;
                         this.startTime = Date.now();
+                        
+                        // Iniciar sincronização periódica
+                        this.startPeriodicSync();
+                        
                         resolve(true);
                     }
                 });
@@ -118,6 +127,122 @@ class WebSocketServer {
                 reject(error);
             }
         });
+    }
+
+    /**
+     * Iniciar sincronização periódica
+     */
+    startPeriodicSync() {
+        // Sincronização a cada 30 segundos
+        this.syncInterval = setInterval(async () => {
+            try {
+                await this.broadcastPeriodicSync();
+            } catch (error) {
+                console.error('[ERROR] Erro na sincronização periódica:', error);
+            }
+        }, 30000); // 30 segundos
+
+        console.log('[INFO] Sincronização periódica iniciada (30s)');
+    }
+
+    /**
+     * Parar sincronização periódica
+     */
+    stopPeriodicSync() {
+        if (this.syncInterval) {
+            clearInterval(this.syncInterval);
+            this.syncInterval = null;
+            console.log('[INFO] Sincronização periódica parada');
+        }
+    }
+
+    /**
+     * Broadcast de sincronização periódica
+     */
+    async broadcastPeriodicSync() {
+        try {
+            const now = new Date();
+            const timeSinceLastSync = now.getTime() - this.lastSyncTime.getTime();
+            
+            // Só sincronizar se passou tempo suficiente
+            if (timeSinceLastSync < 25000) { // 25 segundos
+                return;
+            }
+
+            // Buscar atualizações recentes
+            const recentUpdates = await this.getRecentUpdates();
+            
+            if (recentUpdates.length > 0) {
+                const syncData = {
+                    type: 'periodic_sync',
+                    timestamp: now,
+                    updates: recentUpdates,
+                    stats: this.getStats()
+                };
+
+                // Broadcast para todos os usuários conectados
+                this.io.emit('sync:broadcast', syncData);
+                
+                this.lastSyncTime = now;
+                this.stats.syncCount++;
+                
+                console.log(`[SYNC] Sincronização periódica enviada com ${recentUpdates.length} atualizações`);
+            }
+        } catch (error) {
+            console.error('[ERROR] Erro no broadcast periódico:', error);
+        }
+    }
+
+    /**
+     * Buscar atualizações recentes
+     */
+    async getRecentUpdates() {
+        try {
+            const updates = [];
+            const now = new Date();
+            const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000); // 5 minutos atrás
+
+            // Buscar agendamentos atualizados recentemente
+            const recentAppointments = await this.db.getAppointmentsUpdatedSince(fiveMinutesAgo);
+            
+            recentAppointments.forEach(appointment => {
+                updates.push({
+                    type: 'agendamento',
+                    action: 'update',
+                    data: appointment,
+                    timestamp: appointment.updated_at || appointment.created_at
+                });
+            });
+
+            // Buscar notificações recentes
+            const recentNotifications = await this.db.getNotificationsSince(fiveMinutesAgo);
+            
+            recentNotifications.forEach(notification => {
+                updates.push({
+                    type: 'notification',
+                    action: 'new',
+                    data: notification,
+                    timestamp: notification.created_at
+                });
+            });
+
+            // Buscar mudanças de status
+            const statusChanges = await this.db.getStatusChangesSince(fiveMinutesAgo);
+            
+            statusChanges.forEach(change => {
+                updates.push({
+                    type: 'status',
+                    action: 'change',
+                    data: change,
+                    timestamp: change.updated_at
+                });
+            });
+
+            return updates.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        } catch (error) {
+            console.error('[ERROR] Erro ao buscar atualizações recentes:', error);
+            return [];
+        }
     }
 
     /**
@@ -151,6 +276,19 @@ class WebSocketServer {
                 this.handleAgendamentoShared(socket, data);
             });
 
+            // Eventos de status
+            socket.on('status:update', (data) => {
+                this.handleStatusUpdate(socket, data);
+            });
+
+            socket.on('status:complete', (data) => {
+                this.handleStatusComplete(socket, data);
+            });
+
+            socket.on('status:cancel', (data) => {
+                this.handleStatusCancel(socket, data);
+            });
+
             // Eventos de notificação
             socket.on('notification:send', (data) => {
                 this.handleNotificationSend(socket, data);
@@ -163,6 +301,10 @@ class WebSocketServer {
             // Eventos de sincronização
             socket.on('sync:request', () => {
                 this.handleSyncRequest(socket);
+            });
+
+            socket.on('sync:force', () => {
+                this.handleForceSync(socket);
             });
 
             // Eventos de busca
@@ -495,6 +637,203 @@ class WebSocketServer {
     }
 
     /**
+     * Manipular sincronização forçada
+     */
+    async handleForceSync(socket) {
+        try {
+            console.log(`[SYNC] Sincronização forçada solicitada por ${socket.displayName}`);
+            
+            // Buscar todas as atualizações recentes
+            const recentUpdates = await this.getRecentUpdates();
+            
+            const syncData = {
+                type: 'force_sync',
+                timestamp: new Date(),
+                updates: recentUpdates,
+                stats: this.getStats()
+            };
+
+            socket.emit('sync:response', syncData);
+            
+            console.log(`[SYNC] Sincronização forçada enviada com ${recentUpdates.length} atualizações`);
+            this.stats.messagesReceived++;
+            this.stats.messagesSent++;
+        } catch (error) {
+            console.error('[ERROR] Erro na sincronização forçada:', error);
+        }
+    }
+
+    /**
+     * Manipular atualização de status
+     */
+    async handleStatusUpdate(socket, data) {
+        try {
+            const { agendamentoId, newStatus, userId, reason } = data;
+            
+            // Atualizar status no banco
+            await this.db.updateAppointmentStatus(agendamentoId, newStatus, userId);
+            
+            const updateData = {
+                type: 'status_update',
+                agendamentoId,
+                newStatus,
+                userId: socket.userId,
+                userName: socket.userName,
+                displayName: socket.displayName,
+                reason,
+                timestamp: new Date()
+            };
+
+            // Broadcast para todos os usuários conectados
+            socket.broadcast.emit('status:updated', updateData);
+            
+            // Notificar usuário específico se for compartilhado
+            if (data.sharedWith) {
+                const targetSocket = this.findSocketByUserId(data.sharedWith);
+                if (targetSocket) {
+                    targetSocket.emit('status:updated', updateData);
+                }
+            }
+
+            console.log(`[STATUS] Status atualizado para ${newStatus} por ${socket.displayName}`);
+            this.stats.messagesReceived++;
+            this.stats.messagesSent++;
+            this.stats.updatesBroadcasted++;
+        } catch (error) {
+            console.error('[ERROR] Erro ao atualizar status:', error);
+        }
+    }
+
+    /**
+     * Manipular conclusão de agendamento
+     */
+    async handleStatusComplete(socket, data) {
+        try {
+            const { agendamentoId, completionNotes } = data;
+            
+            // Marcar como concluído no banco
+            await this.db.completeAppointment(agendamentoId, socket.userId, completionNotes);
+            
+            const completeData = {
+                type: 'status_complete',
+                agendamentoId,
+                completedBy: socket.userId,
+                completedByUser: socket.displayName,
+                completionNotes,
+                timestamp: new Date()
+            };
+
+            // Broadcast para todos os usuários conectados
+            socket.broadcast.emit('status:completed', completeData);
+            
+            // Criar notificação de conclusão
+            await this.createCompletionNotification(agendamentoId, socket.displayName);
+
+            console.log(`[STATUS] Agendamento ${agendamentoId} marcado como concluído por ${socket.displayName}`);
+            this.stats.messagesReceived++;
+            this.stats.messagesSent++;
+            this.stats.updatesBroadcasted++;
+        } catch (error) {
+            console.error('[ERROR] Erro ao marcar como concluído:', error);
+        }
+    }
+
+    /**
+     * Manipular cancelamento de agendamento
+     */
+    async handleStatusCancel(socket, data) {
+        try {
+            const { agendamentoId, cancelReason } = data;
+            
+            // Marcar como cancelado no banco
+            await this.db.cancelAppointment(agendamentoId, socket.userId, cancelReason);
+            
+            const cancelData = {
+                type: 'status_cancel',
+                agendamentoId,
+                cancelledBy: socket.userId,
+                cancelledByUser: socket.displayName,
+                cancelReason,
+                timestamp: new Date()
+            };
+
+            // Broadcast para todos os usuários conectados
+            socket.broadcast.emit('status:cancelled', cancelData);
+            
+            // Criar notificação de cancelamento
+            await this.createCancellationNotification(agendamentoId, socket.displayName, cancelReason);
+
+            console.log(`[STATUS] Agendamento ${agendamentoId} cancelado por ${socket.displayName}`);
+            this.stats.messagesReceived++;
+            this.stats.messagesSent++;
+            this.stats.updatesBroadcasted++;
+        } catch (error) {
+            console.error('[ERROR] Erro ao cancelar agendamento:', error);
+        }
+    }
+
+    /**
+     * Criar notificação de conclusão
+     */
+    async createCompletionNotification(agendamentoId, completedByUser) {
+        try {
+            const notification = {
+                id: `notif_${Date.now()}_${Math.random()}`,
+                title: 'Agendamento Concluído',
+                message: `Agendamento ${agendamentoId} foi marcado como concluído por ${completedByUser}`,
+                type: 'completion',
+                agendamentoId,
+                createdAt: new Date()
+            };
+
+            // Buscar todos os usuários conectados e enviar notificação
+            for (const [socketId, userData] of this.connectedUsers.entries()) {
+                const targetSocket = this.io.sockets.sockets.get(socketId);
+                if (targetSocket) {
+                    targetSocket.emit('notification:received', {
+                        notification,
+                        fromUser: { displayName: completedByUser },
+                        timestamp: new Date()
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('[ERROR] Erro ao criar notificação de conclusão:', error);
+        }
+    }
+
+    /**
+     * Criar notificação de cancelamento
+     */
+    async createCancellationNotification(agendamentoId, cancelledByUser, cancelReason) {
+        try {
+            const notification = {
+                id: `notif_${Date.now()}_${Math.random()}`,
+                title: 'Agendamento Cancelado',
+                message: `Agendamento ${agendamentoId} foi cancelado por ${cancelledByUser}. Motivo: ${cancelReason}`,
+                type: 'cancellation',
+                agendamentoId,
+                cancelReason,
+                createdAt: new Date()
+            };
+
+            // Buscar todos os usuários conectados e enviar notificação
+            for (const [socketId, userData] of this.connectedUsers.entries()) {
+                const targetSocket = this.io.sockets.sockets.get(socketId);
+                if (targetSocket) {
+                    targetSocket.emit('notification:received', {
+                        notification,
+                        fromUser: { displayName: cancelledByUser },
+                        timestamp: new Date()
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('[ERROR] Erro ao criar notificação de cancelamento:', error);
+        }
+    }
+
+    /**
      * Manipular consulta de busca
      */
     handleSearchQuery(socket, data) {
@@ -583,6 +922,9 @@ class WebSocketServer {
      */
     stop() {
         try {
+            // Parar sincronização periódica
+            this.stopPeriodicSync();
+            
             if (this.io) {
                 this.io.close();
             }

@@ -8,6 +8,14 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
+    "websocket": "node src/server/start-websocket-server.js",
+    "server": "node src/server/server.js",
+    "auto-websocket": "node src/server/auto-start-websocket.js",
+    "check-websocket": "node src/server/check-websocket.js",
+    "dev-full": "concurrently \"npm run websocket\" \"npm run dev\"",
+    "dev-with-server": "concurrently \"npm run server\" \"npm run dev\"",
+    "dev-with-auto": "concurrently \"npm run auto-websocket\" \"npm run dev\"",
+    "dev-with-check": "node check-websocket.js && npm run dev",
     "build": "electron-builder",
     "build-win": "electron-builder --win",
     "build-mac": "electron-builder --mac",
@@ -16,15 +24,17 @@
     "clean": "rimraf dist build"
   },
   "devDependencies": {
+    "concurrently": "^8.2.2",
     "electron": "^32.0.0",
     "electron-builder": "^25.0.0"
   },
   "dependencies": {
+    "electron-log": "^5.0.0",
     "electron-store": "^8.1.0",
     "electron-updater": "^6.0.0",
-    "electron-log": "^5.0.0",
     "express": "^4.18.0",
     "socket.io": "^4.7.0",
+    "socket.io-client": "^4.8.1",
     "sqlite3": "^5.1.0",
     "uuid": "^10.0.0"
   },

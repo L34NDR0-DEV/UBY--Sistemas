@@ -33,12 +33,33 @@ cd uby-agendamentos
 # Instale as dependências
 npm install
 
-# Execute em modo desenvolvimento
+# Execute em modo desenvolvimento (com WebSocket)
+npm run dev-full
+
+# Ou execute apenas a aplicação (modo offline)
 npm run dev
 
 # Build para produção
 npm run build
 ```
+
+### 🚀 Inicialização Rápida
+
+**Windows:**
+```bash
+# Execute o script de inicialização
+start-app.bat
+```
+
+**Linux/macOS:**
+```bash
+# Execute o script de inicialização
+./start-app.sh
+```
+
+### 🔧 Troubleshooting WebSocket
+
+Se você encontrar erros de conexão WebSocket, consulte o [Guia de Troubleshooting](WEBSOCKET_TROUBLESHOOTING.md).
 
 ## 📦 Builds Disponíveis
 

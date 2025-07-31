@@ -137,29 +137,57 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
     background: transparent;
     color: #666666;
     -webkit-app-region: no-drag;
+    transition: none !important;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
 .window-btn:hover {
-    background: rgba(0, 0, 0, 0.1);
+    background: transparent !important;
+    color: #666666 !important;
+    transform: none !important;
+    box-shadow: none !important;
+    transition: none !important;
 }
 
-.window-btn.close-btn:hover {
-    background: #ff5f56;
-    color: white;
+.window-btn:active {
+    background: transparent !important;
+    color: #666666 !important;
+    transform: none !important;
+    box-shadow: none !important;
+    transition: none !important;
 }
 
-.window-btn.maximize-btn:hover {
-    background: #ffbd2e;
-    color: white;
+.window-btn:focus {
+    background: transparent !important;
+    color: #666666 !important;
+    transform: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    transition: none !important;
 }
 
-.window-btn.minimize-btn:hover {
-    background: #27ca3f;
-    color: white;
+.minimize-btn:hover,
+.maximize-btn:hover,
+.close-btn:hover {
+    background: transparent !important;
+    color: #666666 !important;
+    transform: none !important;
+    box-shadow: none !important;
+    transition: none !important;
+}
+
+.minimize-btn:active,
+.maximize-btn:active,
+.close-btn:active {
+    background: transparent !important;
+    color: #666666 !important;
+    transform: none !important;
+    box-shadow: none !important;
+    transition: none !important;
 }
 
 .header-left {
@@ -1660,7 +1688,6 @@ input:checked + .toggle-slider:before {
     display: flex;
     align-items: center;
     gap: 6px;
-    transition: all 0.3s ease;
 }
 
 .btn-filter-apply {
@@ -1668,21 +1695,10 @@ input:checked + .toggle-slider:before {
     color: white;
 }
 
-.btn-filter-apply:hover {
-    background: #e55a00;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(255, 107, 0, 0.3);
-}
-
 .btn-filter-clear {
     background: var(--bg-secondary);
     color: var(--text-secondary);
     border: 2px solid var(--border-color);
-}
-
-.btn-filter-clear:hover {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
 }
 
 /* Responsividade para a barra de busca */
@@ -1790,9 +1806,7 @@ input:checked + .toggle-slider:before {
     opacity: 0.7;
 }
 
-.agendamento-card:hover {
-    box-shadow: 0 6px 12px rgba(0,0,0,0.15), 0 3px 6px rgba(0,0,0,0.1);
-}
+
 
 .agendamento-card.urgente {
     border-left-color: #e74c3c;
@@ -1898,7 +1912,6 @@ input:checked + .toggle-slider:before {
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.3s ease;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -1918,17 +1931,9 @@ input:checked + .toggle-slider:before {
     color: white;
 }
 
-.action-btn.concluir:hover {
-    background: #229954;
-}
-
 .action-btn.cancelar {
     background: #e74c3c;
     color: white;
-}
-
-.action-btn.cancelar:hover {
-    background: #c0392b;
 }
 
 .action-btn.editar {
@@ -1936,17 +1941,9 @@ input:checked + .toggle-slider:before {
     color: white;
 }
 
-.action-btn.editar:hover {
-    background: #2980b9;
-}
-
 .action-btn.compartilhar {
     background: #9b59b6;
     color: white;
-}
-
-.action-btn.compartilhar:hover {
-    background: #8e44ad;
 }
 
 /* Modais */
@@ -2034,11 +2031,6 @@ input:checked + .toggle-slider:before {
     border-radius: 6px;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.3s ease;
-}
-
-.btn-primary:hover {
-    background: #E55A00;
 }
 
 .btn-secondary {
@@ -2049,11 +2041,6 @@ input:checked + .toggle-slider:before {
     border-radius: 6px;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.3s ease;
-}
-
-.btn-secondary:hover {
-    background: #5a6268;
 }
 
 .btn-danger {
@@ -2064,11 +2051,6 @@ input:checked + .toggle-slider:before {
     border-radius: 6px;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.3s ease;
-}
-
-.btn-danger:hover {
-    background: #c0392b;
 }
 
 /* Responsividade */
@@ -2342,33 +2324,13 @@ input:checked + .toggle-slider:before {
 }
 
 /* Efeito de brilho nos botões */
-.agendamento-card.postit-style .postit-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transition: left 0.5s;
-}
 
-.agendamento-card.postit-style .postit-btn:hover::before {
-    left: 100%;
-}
 
 /* Botão Concluir - Verde */
 .agendamento-card.postit-style .concluir-btn,
 .agendamento-card.postit-style .postit-btn[onclick*="concluirAgendamento"] {
     background: linear-gradient(135deg, #28a745, #1e7e34);
     color: white;
-}
-
-.agendamento-card.postit-style .concluir-btn:hover,
-.agendamento-card.postit-style .postit-btn[onclick*="concluirAgendamento"]:hover {
-    background: linear-gradient(135deg, #1e7e34, #155724);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
 }
 
 /* Botão Cancelar - Amarelo/Laranja */
@@ -2378,25 +2340,11 @@ input:checked + .toggle-slider:before {
     color: #212529;
 }
 
-.agendamento-card.postit-style .cancelar-btn:hover,
-.agendamento-card.postit-style .postit-btn[onclick*="openCancelModal"]:hover {
-    background: linear-gradient(135deg, #e0a800, #d39e00);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
-}
-
 /* Botão Editar - Azul */
 .agendamento-card.postit-style .editar-btn,
 .agendamento-card.postit-style .postit-btn[onclick*="openEditModal"] {
     background: linear-gradient(135deg, #17a2b8, #138496);
     color: white;
-}
-
-.agendamento-card.postit-style .editar-btn:hover,
-.agendamento-card.postit-style .postit-btn[onclick*="openEditModal"]:hover {
-    background: linear-gradient(135deg, #138496, #117a8b);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
 }
 
 /* Botão Compartilhar - Roxo */
@@ -2406,25 +2354,11 @@ input:checked + .toggle-slider:before {
     color: white;
 }
 
-.agendamento-card.postit-style .compartilhar-btn:hover,
-.agendamento-card.postit-style .postit-btn[onclick*="openShareModal"]:hover {
-    background: linear-gradient(135deg, #5a32a3, #4e2a8e);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(111, 66, 193, 0.3);
-}
-
 /* Botão Localização - Laranja */
 .agendamento-card.postit-style .localizacao-btn,
 .agendamento-card.postit-style .postit-btn[onclick*="openLocationModal"] {
     background: linear-gradient(135deg, #fd7e14, #e8650e);
     color: white;
-}
-
-.agendamento-card.postit-style .localizacao-btn:hover,
-.agendamento-card.postit-style .postit-btn[onclick*="openLocationModal"]:hover {
-    background: linear-gradient(135deg, #e8650e, #dc5f0a);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(253, 126, 20, 0.3);
 }
 
 /* Botão Excluir - Vermelho */
@@ -2434,13 +2368,6 @@ input:checked + .toggle-slider:before {
     color: white !important;
 }
 
-.agendamento-card.postit-style .delete-btn:hover, 
-.agendamento-card.postit-style .postit-btn[onclick*="deleteAgendamento"]:hover {
-    background: linear-gradient(135deg, #c82333, #bd2130) !important;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3) !important;
-}
-
 .agendamento-card.postit-style .delete-btn i,
 .agendamento-card.postit-style .postit-btn[onclick*="deleteAgendamento"] i {
     color: white !important;
@@ -2448,7 +2375,6 @@ input:checked + .toggle-slider:before {
 
 /* Estados ativos dos botões */
 .agendamento-card.postit-style .postit-btn:active {
-    transform: translateY(0);
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 

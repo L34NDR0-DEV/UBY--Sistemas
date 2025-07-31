@@ -2310,15 +2310,15 @@ async function connectWithRetry(maxAttempts = 3) {
             
             // Aguardar antes da próxima tentativa
             if (attempt < maxAttempts) {
-                console.log(`[INFO] Aguardando 2 segundos antes da próxima tentativa...`);
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                console.log(`[INFO] Aguardando 3 segundos antes da próxima tentativa...`);
+                await new Promise(resolve => setTimeout(resolve, 3000));
             }
             
         } catch (error) {
             console.error(`[ERROR] Tentativa ${attempt} na porta 3002 falhou:`, error);
             
             if (attempt < maxAttempts) {
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                await new Promise(resolve => setTimeout(resolve, 3000));
             }
         }
     }

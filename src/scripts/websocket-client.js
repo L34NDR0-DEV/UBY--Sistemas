@@ -23,9 +23,9 @@ class WebSocketClient {
      */
     async connect(serverUrl = 'http://localhost:3002') {
         try {
-            // Importar Socket.IO client
+            // Verificar se Socket.IO está disponível
             if (typeof io === 'undefined') {
-                console.error('[ERROR] Socket.IO client não encontrado');
+                console.error('[ERROR] Socket.IO client não encontrado. Verifique se o script socket.io.js está carregado.');
                 return false;
             }
 
@@ -36,10 +36,12 @@ class WebSocketClient {
                 transports: ['websocket', 'polling'],
                 timeout: 10000,
                 forceNew: true,
-                reconnection: true,
-                reconnectionAttempts: 5,
+                reconnection: false, // Desabilitar reconexão automática para controlar manualmente
+                reconnectionAttempts: 0,
                 reconnectionDelay: 1000,
-                reconnectionDelayMax: 5000
+                reconnectionDelayMax: 5000,
+                upgrade: true,
+                rememberUpgrade: false
             });
 
             // Configurar eventos básicos
@@ -49,8 +51,11 @@ class WebSocketClient {
             return new Promise((resolve) => {
                 const timeout = setTimeout(() => {
                     console.error('[ERROR] Timeout na conexão WebSocket');
+                    if (this.socket) {
+                        this.socket.disconnect();
+                    }
                     resolve(false);
-                }, 15000);
+                }, 10000); // Reduzir timeout para 10 segundos
 
                 this.socket.on('connect', () => {
                     clearTimeout(timeout);
@@ -71,6 +76,10 @@ class WebSocketClient {
                         console.log(`[INFO] Servidor não disponível em ${serverUrl}`);
                     } else {
                         console.error('[ERROR] Erro de conexão WebSocket:', error.message || error);
+                    }
+                    
+                    if (this.socket) {
+                        this.socket.disconnect();
                     }
                     resolve(false);
                 });
@@ -153,6 +162,23 @@ class WebSocketClient {
         // Eventos de sincronização
         this.socket.on('sync:response', (data) => {
             this.handleSyncResponse(data);
+        });
+
+        this.socket.on('sync:broadcast', (data) => {
+            this.handleSyncBroadcast(data);
+        });
+
+        // Eventos de status
+        this.socket.on('status:updated', (data) => {
+            this.handleStatusUpdated(data);
+        });
+
+        this.socket.on('status:completed', (data) => {
+            this.handleStatusCompleted(data);
+        });
+
+        this.socket.on('status:cancelled', (data) => {
+            this.handleStatusCancelled(data);
         });
 
         // Eventos de busca
@@ -400,6 +426,140 @@ class WebSocketClient {
         if (window.syncLocalData) {
             window.syncLocalData(data);
         }
+    }
+
+    /**
+     * Manipular broadcast de sincronização
+     */
+    handleSyncBroadcast(data) {
+        console.log(`[SYNC] Broadcast recebido com ${data.updates?.length || 0} atualizações`);
+        
+        // Processar atualizações em tempo real
+        if (data.updates && data.updates.length > 0) {
+            data.updates.forEach(update => {
+                this.processUpdate(update);
+            });
+        }
+        
+        // Emitir evento para o sistema principal
+        this.emit('sync:broadcast', data);
+    }
+
+    /**
+     * Processar atualização individual
+     */
+    processUpdate(update) {
+        switch (update.type) {
+            case 'agendamento':
+                this.handleAgendamentoUpdate(update);
+                break;
+            case 'notification':
+                this.handleNotificationUpdate(update);
+                break;
+            case 'status':
+                this.handleStatusUpdate(update);
+                break;
+            default:
+                console.log(`[UPDATE] Tipo de atualização desconhecido: ${update.type}`);
+        }
+    }
+
+    /**
+     * Manipular atualização de status
+     */
+    handleStatusUpdated(data) {
+        console.log(`[STATUS] Status atualizado: ${data.newStatus} para agendamento ${data.agendamentoId}`);
+        
+        // Emitir evento para o sistema principal
+        this.emit('status:updated', data);
+        
+        // Atualizar interface se disponível
+        if (window.updateAgendamentoStatus) {
+            window.updateAgendamentoStatus(data.agendamentoId, data.newStatus);
+        }
+    }
+
+    /**
+     * Manipular conclusão de agendamento
+     */
+    handleStatusCompleted(data) {
+        console.log(`[STATUS] Agendamento ${data.agendamentoId} marcado como concluído por ${data.completedByUser}`);
+        
+        // Emitir evento para o sistema principal
+        this.emit('status:completed', data);
+        
+        // Atualizar interface se disponível
+        if (window.completeAgendamento) {
+            window.completeAgendamento(data.agendamentoId, data.completionNotes);
+        }
+    }
+
+    /**
+     * Manipular cancelamento de agendamento
+     */
+    handleStatusCancelled(data) {
+        console.log(`[STATUS] Agendamento ${data.agendamentoId} cancelado por ${data.cancelledByUser}`);
+        
+        // Emitir evento para o sistema principal
+        this.emit('status:cancelled', data);
+        
+        // Atualizar interface se disponível
+        if (window.cancelAgendamento) {
+            window.cancelAgendamento(data.agendamentoId, data.cancelReason);
+        }
+    }
+
+    /**
+     * Enviar atualização de status
+     */
+    sendStatusUpdate(agendamentoId, newStatus, reason = '') {
+        if (!this.isConnected) return false;
+
+        this.socket.emit('status:update', {
+            agendamentoId,
+            newStatus,
+            reason
+        });
+
+        return true;
+    }
+
+    /**
+     * Marcar agendamento como concluído
+     */
+    sendStatusComplete(agendamentoId, completionNotes = '') {
+        if (!this.isConnected) return false;
+
+        this.socket.emit('status:complete', {
+            agendamentoId,
+            completionNotes
+        });
+
+        return true;
+    }
+
+    /**
+     * Cancelar agendamento
+     */
+    sendStatusCancel(agendamentoId, cancelReason = '') {
+        if (!this.isConnected) return false;
+
+        this.socket.emit('status:cancel', {
+            agendamentoId,
+            cancelReason
+        });
+
+        return true;
+    }
+
+    /**
+     * Forçar sincronização
+     */
+    forceSync() {
+        if (!this.isConnected) return false;
+
+        this.socket.emit('sync:force');
+        return true;
     }
 
     /**

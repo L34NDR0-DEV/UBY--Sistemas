@@ -713,7 +713,7 @@ if (disableUpdates) {
 } else {
     console.log('✅ Sistema de atualizações automáticas ativado');
 }
-}
+
 
 // Configurar logs do autoUpdater (apenas em desenvolvimento)
 if (process.env.NODE_ENV === 'development') {

@@ -16,11 +16,7 @@ class UpdateManager {
         this.isChecking = false;
         this.isUpdating = false;
         this.isSilentCheck = false;
-<<<<<<< HEAD
         this.isDisabled = false; // Sistema de atualizações ativado
-=======
-        this.isDisabled = false;
->>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
         this.currentVersion = '1.0.0'; // Versão padrão, será atualizada se possível
         this.errorCount = 0;
         this.maxErrors = 3;

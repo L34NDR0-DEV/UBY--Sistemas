@@ -1,6 +1,6 @@
 {
   "name": "uby-agendamentos",
-  "version": "6.0.4",
+  "version": "1.0.1",
   "description": "Sistema profissional de gestão de agendamentos desenvolvido com Electron",
   "main": "app/main.js",
   "author": "L34NDR0-DEV",

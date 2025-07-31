@@ -1,41 +1,48 @@
 # Changelog
 
-## [6.0.4] - 2024-12-31
+## [1.0.1] - 2024-12-31
 
-### ✨ Novas Funcionalidades
-- **Sistema de Cadastro de Usuários**: Implementado modal de novo cadastro com validação em tempo real
-- **Toggle de Visibilidade de Senha**: Adicionado ícone de olho para mostrar/ocultar senha em todos os campos de senha
-- **Modal de Confirmação Personalizado**: Substituído o `confirm()` nativo por modal customizado com estilos do sistema
-- **Validação em Tempo Real**: Feedback visual imediato para campos de usuário e senha
-- **Animações Suaves**: Transições e animações para melhor experiência do usuário
+### 🔄 Reset de Versão
+- **Nova Numeração**: Sistema migrado para versão 1.0.1
+- **Base Estável**: Versão consolidada com todas as funcionalidades
+- **Compatibilidade**: Mantém todas as funcionalidades da v6.0.4
+
+### ✨ Funcionalidades Principais
+- **Sistema de Cadastro de Usuários**: Modal de novo cadastro com validação em tempo real
+- **Toggle de Visibilidade de Senha**: Ícone de olho para mostrar/ocultar senha
+- **Modal de Confirmação Personalizado**: Interface customizada para confirmações
+- **Validação em Tempo Real**: Feedback visual imediato para campos
+- **Animações Suaves**: Transições e animações para melhor UX
 
 ### 🎨 Melhorias de Interface
-- **Ícones Profissionais**: Adicionados ícones SVG em todos os campos de input
-- **Alinhamento Perfeito**: Corrigido posicionamento e alinhamento de todos os ícones
-- **Remoção de Sombras**: Eliminadas sombras dos botões de controle da janela
-- **Interface Limpa**: Removidas dicas de input para interface mais minimalista
-- **Responsividade**: Melhorada adaptação para diferentes tamanhos de tela
+- **Ícones Profissionais**: SVG otimizados em todos os campos
+- **Alinhamento Perfeito**: Posicionamento preciso e consistente
+- **Remoção de Sombras**: Visual flat moderno
+- **Interface Limpa**: Design minimalista e focado
+- **Responsividade**: Adaptação perfeita para diferentes telas
 
 ### 🔧 Melhorias Técnicas
-- **WebSocket Auto-Start**: Sistema robusto de inicialização automática do servidor WebSocket
-- **IPC Handlers**: Implementados handlers para registro de usuários e controle do servidor
-- **Validação de Formulários**: Sistema completo de validação client-side e server-side
-- **Gestão de Usuários**: Sistema de armazenamento e verificação de usuários em JSON
-- **Tratamento de Erros**: Melhorado sistema de tratamento e exibição de erros
+- **WebSocket Auto-Start**: Sistema robusto de inicialização
+- **IPC Handlers**: Comunicação segura entre processos
+- **Validação de Formulários**: Sistema completo client-side e server-side
+- **Gestão de Usuários**: Sistema de armazenamento em JSON
+- **Tratamento de Erros**: Sistema robusto de exceções
 
 ### 🐛 Correções
-- **Alinhamento de Ícones**: Corrigido desalinhamento vertical dos ícones nos campos
-- **Espaçamentos**: Ajustados espaçamentos para consistência visual
-- **Estados de Loading**: Implementados estados de carregamento para melhor feedback
-- **Transições**: Corrigidas animações de abertura e fechamento do olho
+- **Alinhamento de Ícones**: Corrigido desalinhamento vertical
+- **Espaçamentos**: Ajustados para consistência visual
+- **Estados de Loading**: Implementados para melhor feedback
+- **Transições**: Corrigidas animações de abertura e fechamento
+- **Conexão WebSocket**: Corrigido erro de inicialização
 
 ### 📦 Arquivos Modificados
-- `src/views/login.html`: Adicionado modal de cadastro e toggles de senha
-- `src/styles/login.css`: Estilos para novos componentes e correções de alinhamento
-- `src/scripts/login.js`: Lógica de validação e controle do modal de cadastro
+- `src/views/login.html`: Modal de cadastro e toggles de senha
+- `src/styles/login.css`: Estilos para novos componentes
+- `src/scripts/login.js`: Lógica de validação e controle
 - `app/main.js`: Handlers IPC para registro de usuários
 - `src/data/users.json`: Sistema de armazenamento de usuários
-- `package.json`: Atualização de versão para 6.0.4
+- `src/server/websocket-fallback.js`: Script de fallback para WebSocket
+- `package.json`: Atualização de versão para 1.0.1
 
 ### 🚀 Como Usar
 1. **Novo Cadastro**: Clique em "Novo Cadastro" na tela de login
@@ -56,7 +63,14 @@
 
 ---
 
-## [6.0.3] - Versão Anterior
+## [6.0.4] - Versão Anterior (Deprecated)
+- Sistema de cadastro de usuários
+- Toggle de visibilidade de senha
+- Modal de confirmação personalizado
+- Validação em tempo real
+- Melhorias de interface e correções técnicas
+
+## [6.0.3] - Versão Base
 - Sistema base de agendamentos
 - WebSocket para sincronização
 - Interface básica de login 

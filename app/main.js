@@ -1126,47 +1126,129 @@ ipcMain.handle('startWebSocketServer', async () => {
       return { success: true, message: 'Servidor já está rodando' };
     }
     
-    // Iniciar servidor usando auto-start-websocket.js
-    const { spawn } = require('child_process');
-    const path = require('path');
-    
-    const serverProcess = spawn('node', ['src/server/auto-start-websocket.js'], {
-      stdio: 'pipe',
-      detached: false,
-      cwd: path.join(__dirname, '..')
-    });
-    
-    return new Promise((resolve) => {
-      let started = false;
+    // Tentar iniciar o servidor diretamente no processo principal
+    try {
+      console.log('[INFO] Tentando iniciar servidor no processo principal...');
+      const autoStartPath = path.join(__dirname, '..', 'src', 'server', 'auto-start-websocket.js');
       
-      serverProcess.stdout.on('data', (data) => {
-        const output = data.toString().trim();
-        console.log('[WEBSOCKET]', output);
+      // Verificar se o arquivo existe
+      const fs = require('fs');
+      if (fs.existsSync(autoStartPath)) {
+        // Importar e executar o módulo
+        const WebSocketAutoStarter = require(autoStartPath);
+        const autoStarter = new WebSocketAutoStarter();
         
-        if (output.includes('Servidor WebSocket iniciado automaticamente') && !started) {
-          started = true;
-          console.log('[SUCCESS] Servidor WebSocket iniciado via IPC');
-          resolve({ success: true, message: 'Servidor iniciado com sucesso' });
+        // Inicializar o servidor
+        const success = await autoStarter.initializeWithRetry();
+        
+        if (success) {
+          console.log('[SUCCESS] Servidor iniciado no processo principal');
+          return { success: true, message: 'Servidor iniciado no processo principal' };
+        } else {
+          throw new Error('Falha ao inicializar servidor no processo principal');
         }
-      });
+      }
+    } catch (directError) {
+      console.log('[INFO] Falha ao iniciar no processo principal:', directError.message);
+    }
+    
+    // Tentar processo separado
+    try {
+      console.log('[INFO] Tentando processo separado...');
+      const { spawn } = require('child_process');
+      const path = require('path');
       
-      serverProcess.stderr.on('data', (data) => {
-        console.error('[WEBSOCKET ERROR]', data.toString().trim());
-      });
+      // Usar o executável correto do Node.js
+      let nodeExecutable = 'node';
       
-      serverProcess.on('error', (error) => {
-        console.error('[ERROR] Erro ao iniciar servidor via IPC:', error);
-        resolve({ success: false, error: error.message });
-      });
-      
-      // Timeout de 15 segundos
-      setTimeout(() => {
-        if (!started) {
-          serverProcess.kill('SIGTERM');
-          resolve({ success: false, error: 'Timeout ao iniciar servidor' });
+      // Se estiver no Electron, tentar usar o Node.js embutido
+      if (process.versions.electron) {
+        // Tentar diferentes caminhos para o Node.js
+        const possiblePaths = [
+          process.execPath.replace('electron.exe', 'node.exe'),
+          path.join(process.resourcesPath, 'app.asar.unpacked', 'node_modules', 'npm', 'bin', 'node-cli.js'),
+          'node'
+        ];
+        
+        for (const nodePath of possiblePaths) {
+          try {
+            require('fs').accessSync(nodePath, require('fs').constants.X_OK);
+            nodeExecutable = nodePath;
+            console.log('[INFO] Usando Node.js em:', nodePath);
+            break;
+          } catch (e) {
+            console.log('[INFO] Node.js não encontrado em:', nodePath);
+          }
         }
-      }, 15000);
-    });
+      }
+      
+      const serverProcess = spawn(nodeExecutable, ['src/server/auto-start-websocket.js'], {
+        stdio: 'pipe',
+        detached: false,
+        cwd: path.join(__dirname, '..'),
+        env: { ...process.env, NODE_ENV: 'production' }
+      });
+      
+      return new Promise((resolve) => {
+        let started = false;
+        
+        serverProcess.stdout.on('data', (data) => {
+          const output = data.toString().trim();
+          console.log('[WEBSOCKET]', output);
+          
+          if (output.includes('Servidor WebSocket iniciado automaticamente') && !started) {
+            started = true;
+            console.log('[SUCCESS] Servidor WebSocket iniciado via IPC');
+            resolve({ success: true, message: 'Servidor iniciado com sucesso' });
+          }
+        });
+        
+        serverProcess.stderr.on('data', (data) => {
+          console.error('[WEBSOCKET ERROR]', data.toString().trim());
+        });
+        
+        serverProcess.on('error', (error) => {
+          console.error('[ERROR] Erro ao iniciar servidor via IPC:', error);
+          resolve({ success: false, error: error.message });
+        });
+        
+        // Timeout de 15 segundos
+        setTimeout(() => {
+          if (!started) {
+            serverProcess.kill('SIGTERM');
+            resolve({ success: false, error: 'Timeout ao iniciar servidor' });
+          }
+        }, 15000);
+      });
+      
+    } catch (processError) {
+      console.log('[INFO] Falha no processo separado:', processError.message);
+    }
+    
+    // Última tentativa: usar fallback
+    try {
+      console.log('[INFO] Tentando método de fallback...');
+      const fallbackPath = path.join(__dirname, '..', 'src', 'server', 'websocket-fallback.js');
+      const fs = require('fs');
+      
+      if (fs.existsSync(fallbackPath)) {
+        const WebSocketFallback = require(fallbackPath);
+        const fallback = new WebSocketFallback();
+        
+        const success = await fallback.initialize();
+        
+        if (success) {
+          console.log('[SUCCESS] Servidor iniciado via fallback');
+          return { success: true, message: 'Servidor iniciado via fallback' };
+        }
+      }
+    } catch (fallbackError) {
+      console.log('[INFO] Falha no fallback:', fallbackError.message);
+    }
+    
+    // Se chegou aqui, nenhum método funcionou
+    console.error('[ERROR] Todos os métodos de inicialização falharam');
+    return { success: false, error: 'Não foi possível iniciar o servidor WebSocket' };
     
   } catch (error) {
     console.error('[ERROR] Erro ao iniciar servidor WebSocket via IPC:', error);

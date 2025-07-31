@@ -267,7 +267,11 @@ class ShareModal {
 
                 // Notificação de sucesso
                 if (window.showToast) {
+<<<<<<< HEAD
                     window.showToast(`Agendamento compartilhado com sucesso para ${targetUser.displayName}!`, 'success');
+=======
+                    window.showToast(`✅ Agendamento compartilhado com sucesso para ${targetUser.displayName}!`, 'success');
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
                 } else {
                     alert(`Agendamento compartilhado com sucesso para ${targetUser.displayName}!`);
                 }

@@ -513,7 +513,6 @@ ipcMain.handle('shareAgendamento', async (event, shareData) => {
         global.webSocketServer.broadcastToUser(fromUserId, 'notification:received', shareNotification);
       }
     }
-    
     // Criar notificação para o usuário destinatário
     const notifications = store.get('notifications', []);
     const notification = {
@@ -548,7 +547,6 @@ ipcMain.handle('shareAgendamento', async (event, shareData) => {
       
       global.webSocketServer.broadcastToUser(toUserId, 'notification:received', receiveNotification);
     }
-    
     return { success: true };
   } catch (error) {
     console.error('Erro ao compartilhar agendamento:', error);
@@ -714,6 +712,7 @@ if (disableUpdates) {
     console.log('🚫 Sistema de atualizações desabilitado (modo desenvolvimento)');
 } else {
     console.log('✅ Sistema de atualizações automáticas ativado');
+}
 }
 
 // Configurar logs do autoUpdater (apenas em desenvolvimento)

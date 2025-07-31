@@ -339,13 +339,18 @@ class TTSManager {
         }
     }
     
+<<<<<<< HEAD
     speakAgendamentoAtrasado(nomeCliente, minutosAtraso, nomeAtendente = '') {
+=======
+    speakAgendamentoAtrasado(nomeCliente, minutosAtraso) {
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
         // Tocar som de alerta primeiro
         this.playAlertSound();
         
         // Aguardar um pouco antes de adicionar à fila com prioridade alta
         setTimeout(() => {
             const tempoFormatado = this.formatMinutesForSpeech(minutosAtraso);
+<<<<<<< HEAD
             let text = `Atenção! Agendamento de ${nomeCliente} está atrasado em ${tempoFormatado}`;
             
             // Adicionar nome do atendente se fornecido
@@ -353,6 +358,9 @@ class TTSManager {
                 text += `. Atendente responsável: ${nomeAtendente}`;
             }
             
+=======
+            const text = `Atenção! Agendamento de ${nomeCliente} está atrasado em ${tempoFormatado}`;
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
             this.speakUrgent(text, { 
                 volume: Math.min(this.volume + 0.2, 1), // Volume um pouco mais alto para alertas
                 priority: 2 // Prioridade urgente para atrasos
@@ -374,7 +382,11 @@ class TTSManager {
     
     speakAgendamentoProximo(nomeCliente, minutosRestantes) {
         const tempoFormatado = this.formatMinutesForSpeech(minutosRestantes);
+<<<<<<< HEAD
         const text = `Lembrete: aviso de antecedência. Agendamento de ${nomeCliente} em ${tempoFormatado}`;
+=======
+        const text = `Lembrete: agendamento de ${nomeCliente} em ${tempoFormatado}`;
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
         
         // Usar prioridade baseada no tempo restante
         let priority = 0; // Normal
@@ -515,6 +527,7 @@ window.TTSNotifications = {
         ttsManager.speak(`Agendamento de ${nomeCliente} foi atualizado`);
     },
     
+<<<<<<< HEAD
     agendamentoCompartilhado: (nomeCliente, compartilhadoPor, mensagem = '') => {
         console.log('[DEBUG] TTSNotifications.agendamentoCompartilhado chamado:', { nomeCliente, compartilhadoPor, mensagem });
         
@@ -621,6 +634,11 @@ window.TTSNotifications = {
     agendamentoAtrasado: (nomeCliente, minutosAtraso, nomeAtendente = '') => {
         console.log('[DEBUG] TTSNotifications.agendamentoAtrasado chamado:', { nomeCliente, minutosAtraso, nomeAtendente });
         ttsManager.speakAgendamentoAtrasado(nomeCliente, minutosAtraso, nomeAtendente);
+=======
+    agendamentoAtrasado: (nomeCliente, minutosAtraso) => {
+        console.log('[DEBUG] TTSNotifications.agendamentoAtrasado chamado:', { nomeCliente, minutosAtraso });
+        ttsManager.speakAgendamentoAtrasado(nomeCliente, minutosAtraso);
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
     },
     
     agendamentoProximo: (nomeCliente, minutosRestantes) => {
@@ -706,7 +724,51 @@ class ReminderSystem {
             const timeDiff = agendamentoTime.getTime() - currentTime;
             const minutesDiff = Math.floor(timeDiff / (1000 * 60));
             
+<<<<<<< HEAD
             // ===== AVISOS ANTECIPADOS OTIMIZADOS =====
+=======
+            // ===== AVISOS ANTECIPADOS COM MAIOR FREQUÊNCIA =====
+            
+            // Lembrete 2 horas (120 minutos) antes - NOVO
+            if (minutesDiff === 120 && !this.reminders.has(`${agendamento.id}-120`)) {
+                this.reminders.add(`${agendamento.id}-120`);
+                TTSNotifications.agendamentoProximo(agendamento.nomeCliente, 120);
+                
+                // Criar notificação visual
+                if (window.notificationSystem) {
+                    window.notificationSystem.createNotification({
+                        type: 'reminder',
+                        title: 'Lembrete - 2 horas',
+                        message: `Agendamento com ${agendamento.nomeCliente} às ${agendamento.horario}`,
+                        data: {
+                            cliente: agendamento.nomeCliente,
+                            data: agendamento.data,
+                            hora: agendamento.horario,
+                            telefone: agendamento.numeroContato
+                        },
+                        actions: [
+                            {
+                                id: 'view',
+                                label: 'Ver Detalhes',
+                                style: 'primary',
+                                callback: (data) => {
+                                    if (window.showAgendamentoDetails) {
+                                        window.showAgendamentoDetails(agendamento.id);
+                                    }
+                                }
+                            }
+                        ]
+                    });
+                }
+                
+                if (window.showToast) {
+                    window.showToast(
+                        `[REMINDER] Lembrete - 2 horas: ${agendamento.nomeCliente} às ${agendamento.horario}`,
+                        'info'
+                    );
+                }
+            }
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
             
             // Lembrete 1 hora (60 minutos) antes
             if (minutesDiff === 60 && !this.reminders.has(`${agendamento.id}-60`)) {
@@ -748,16 +810,27 @@ class ReminderSystem {
                 }
             }
             
+<<<<<<< HEAD
             // Lembrete 50 minutos antes
             if (minutesDiff === 50 && !this.reminders.has(`${agendamento.id}-50`)) {
                 this.reminders.add(`${agendamento.id}-50`);
                 TTSNotifications.agendamentoProximo(agendamento.nomeCliente, 50);
+=======
+            // Lembrete 45 minutos antes - NOVO
+            if (minutesDiff === 45 && !this.reminders.has(`${agendamento.id}-45`)) {
+                this.reminders.add(`${agendamento.id}-45`);
+                TTSNotifications.agendamentoProximo(agendamento.nomeCliente, 45);
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
                 
                 // Criar notificação visual
                 if (window.notificationSystem) {
                     window.notificationSystem.createNotification({
                         type: 'reminder',
+<<<<<<< HEAD
                         title: 'Lembrete - 50 minutos',
+=======
+                        title: 'Lembrete - 45 minutos',
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
                         message: `Agendamento com ${agendamento.nomeCliente} às ${agendamento.horario}`,
                         data: {
                             cliente: agendamento.nomeCliente,
@@ -782,13 +855,61 @@ class ReminderSystem {
                 
                 if (window.showToast) {
                     window.showToast(
+<<<<<<< HEAD
                         `[REMINDER] Lembrete - 50 minutos: ${agendamento.nomeCliente} às ${agendamento.horario}`,
+=======
+                        `[REMINDER] Lembrete - 45 minutos: ${agendamento.nomeCliente} às ${agendamento.horario}`,
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
                         'info'
                     );
                 }
             }
             
+<<<<<<< HEAD
             // Lembrete 20 minutos antes
+=======
+            // Lembrete 30 minutos antes
+            if (minutesDiff === 30 && !this.reminders.has(`${agendamento.id}-30`)) {
+                this.reminders.add(`${agendamento.id}-30`);
+                TTSNotifications.agendamentoProximo(agendamento.nomeCliente, 30);
+                
+                // Criar notificação visual
+                if (window.notificationSystem) {
+                    window.notificationSystem.createNotification({
+                        type: 'reminder',
+                        title: 'Lembrete - 30 minutos',
+                        message: `Agendamento com ${agendamento.nomeCliente} às ${agendamento.horario}`,
+                        data: {
+                            cliente: agendamento.nomeCliente,
+                            data: agendamento.data,
+                            hora: agendamento.horario,
+                            telefone: agendamento.numeroContato
+                        },
+                        actions: [
+                            {
+                                id: 'view',
+                                label: 'Ver Detalhes',
+                                style: 'primary',
+                                callback: (data) => {
+                                    if (window.showAgendamentoDetails) {
+                                        window.showAgendamentoDetails(agendamento.id);
+                                    }
+                                }
+                            }
+                        ]
+                    });
+                }
+                
+                if (window.showToast) {
+                    window.showToast(
+                        `[REMINDER] Lembrete - 30 minutos: ${agendamento.nomeCliente} às ${agendamento.horario}`,
+                        'info'
+                    );
+                }
+            }
+            
+            // Lembrete 20 minutos antes - NOVO
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
             if (minutesDiff === 20 && !this.reminders.has(`${agendamento.id}-20`)) {
                 this.reminders.add(`${agendamento.id}-20`);
                 TTSNotifications.agendamentoProximo(agendamento.nomeCliente, 20);
@@ -828,6 +949,109 @@ class ReminderSystem {
                 }
             }
             
+<<<<<<< HEAD
+=======
+            // Lembrete 15 minutos antes
+            if (minutesDiff === 15 && !this.reminders.has(`${agendamento.id}-15`)) {
+                this.reminders.add(`${agendamento.id}-15`);
+                TTSNotifications.agendamentoProximo(agendamento.nomeCliente, 15);
+                
+                // Criar notificação visual
+                if (window.notificationSystem) {
+                    window.notificationSystem.createNotification({
+                        type: 'warning',
+                        title: 'Lembrete - 15 minutos',
+                        message: `Agendamento com ${agendamento.nomeCliente} às ${agendamento.horario}`,
+                        data: {
+                            cliente: agendamento.nomeCliente,
+                            data: agendamento.data,
+                            hora: agendamento.horario,
+                            telefone: agendamento.numeroContato
+                        },
+                        actions: [
+                            {
+                                id: 'view',
+                                label: 'Ver Detalhes',
+                                style: 'primary',
+                                callback: (data) => {
+                                    if (window.showAgendamentoDetails) {
+                                        window.showAgendamentoDetails(agendamento.id);
+                                    }
+                                }
+                            },
+                            {
+                                id: 'complete',
+                                label: 'Marcar como Concluído',
+                                style: 'secondary',
+                                callback: (data) => {
+                                    if (window.markAsCompleted) {
+                                        window.markAsCompleted(agendamento.id);
+                                    }
+                                }
+                            }
+                        ]
+                    });
+                }
+                
+                if (window.showToast) {
+                    window.showToast(
+                        `[WARNING] Lembrete - 15 minutos: ${agendamento.nomeCliente} às ${agendamento.horario}`,
+                        'warning'
+                    );
+                }
+            }
+            
+            // Lembrete 10 minutos antes - NOVO
+            if (minutesDiff === 10 && !this.reminders.has(`${agendamento.id}-10`)) {
+                this.reminders.add(`${agendamento.id}-10`);
+                TTSNotifications.agendamentoProximo(agendamento.nomeCliente, 10);
+                
+                // Criar notificação visual
+                if (window.notificationSystem) {
+                    window.notificationSystem.createNotification({
+                        type: 'urgent',
+                        title: 'Lembrete - 10 minutos',
+                        message: `Agendamento com ${agendamento.nomeCliente} às ${agendamento.horario}`,
+                        data: {
+                            cliente: agendamento.nomeCliente,
+                            data: agendamento.data,
+                            hora: agendamento.horario,
+                            telefone: agendamento.numeroContato
+                        },
+                        actions: [
+                            {
+                                id: 'view',
+                                label: 'Ver Detalhes',
+                                style: 'primary',
+                                callback: (data) => {
+                                    if (window.showAgendamentoDetails) {
+                                        window.showAgendamentoDetails(agendamento.id);
+                                    }
+                                }
+                            },
+                            {
+                                id: 'complete',
+                                label: 'Marcar como Concluído',
+                                style: 'secondary',
+                                callback: (data) => {
+                                    if (window.markAsCompleted) {
+                                        window.markAsCompleted(agendamento.id);
+                                    }
+                                }
+                            }
+                        ]
+                    });
+                }
+                
+                if (window.showToast) {
+                    window.showToast(
+                        `[URGENT] Lembrete - 10 minutos: ${agendamento.nomeCliente} às ${agendamento.horario}`,
+                        'warning'
+                    );
+                }
+            }
+            
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
             // Lembrete 5 minutos antes
             if (minutesDiff === 5 && !this.reminders.has(`${agendamento.id}-5`)) {
                 this.reminders.add(`${agendamento.id}-5`);
@@ -878,6 +1102,59 @@ class ReminderSystem {
                 }
             }
             
+<<<<<<< HEAD
+=======
+            // Lembrete 2 minutos antes - NOVO
+            if (minutesDiff === 2 && !this.reminders.has(`${agendamento.id}-2`)) {
+                this.reminders.add(`${agendamento.id}-2`);
+                TTSNotifications.agendamentoProximo(agendamento.nomeCliente, 2);
+                
+                // Criar notificação visual
+                if (window.notificationSystem) {
+                    window.notificationSystem.createNotification({
+                        type: 'urgent',
+                        title: 'Lembrete - 2 minutos',
+                        message: `Agendamento com ${agendamento.nomeCliente} às ${agendamento.horario}`,
+                        data: {
+                            cliente: agendamento.nomeCliente,
+                            data: agendamento.data,
+                            hora: agendamento.horario,
+                            telefone: agendamento.numeroContato
+                        },
+                        actions: [
+                            {
+                                id: 'view',
+                                label: 'Ver Detalhes',
+                                style: 'primary',
+                                callback: (data) => {
+                                    if (window.showAgendamentoDetails) {
+                                        window.showAgendamentoDetails(agendamento.id);
+                                    }
+                                }
+                            },
+                            {
+                                id: 'complete',
+                                label: 'Marcar como Concluído',
+                                style: 'secondary',
+                                callback: (data) => {
+                                    if (window.markAsCompleted) {
+                                        window.markAsCompleted(agendamento.id);
+                                    }
+                                }
+                            }
+                        ]
+                    });
+                }
+                
+                if (window.showToast) {
+                    window.showToast(
+                        `[URGENT] Lembrete - 2 minutos: ${agendamento.nomeCliente} às ${agendamento.horario}`,
+                        'error'
+                    );
+                }
+            }
+            
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
             // ===== AVISOS DE ATRASO COM FREQUÊNCIA REDUZIDA =====
             if (minutesDiff < 0) {
                 const minutesLate = Math.abs(minutesDiff);
@@ -899,7 +1176,11 @@ class ReminderSystem {
                     lateInfo.count++;
                     lateInfo.lastAlert = now;
                     
+<<<<<<< HEAD
                     TTSNotifications.agendamentoAtrasado(agendamento.nomeCliente, minutesLate, agendamento.atendente);
+=======
+                    TTSNotifications.agendamentoAtrasado(agendamento.nomeCliente, minutesLate);
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
                     
                     // Criar notificação visual de atraso
                     if (window.notificationSystem) {

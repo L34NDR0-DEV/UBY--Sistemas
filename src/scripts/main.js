@@ -79,9 +79,12 @@ let sharingAgendamento = null;
 let isOnline = navigator.onLine;
 let currentTheme = localStorage.getItem('theme') || 'light';
 
+<<<<<<< HEAD
 // Constante para limite de edições
 const MAX_EDIT_COUNT = 2;
 
+=======
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
 // Lista de usuários para compartilhamento
 const users = [
     { id: 1, nome: 'João Silva', email: 'joao@uby.com', avatar: 'JS' },
@@ -241,12 +244,32 @@ function setupEventListeners() {
     // Modais
     document.getElementById('closeEditModal').addEventListener('click', closeEditModal);
     document.getElementById('closeCancelModal').addEventListener('click', closeCancelModal);
+<<<<<<< HEAD
     // Event listeners do modal de localização movidos para MapModal.js
     document.getElementById('cancelEdit').addEventListener('click', closeEditModal);
     document.getElementById('cancelCancelation').addEventListener('click', closeCancelModal);
     
     // Controles do mapa - movidos para MapModal.js
     // Os controles são gerenciados pelo MapModal
+=======
+    document.getElementById('closeLocationModal').addEventListener('click', closeLocationModal);
+    document.getElementById('openInMaps').addEventListener('click', openInGoogleMaps);
+    document.getElementById('cancelEdit').addEventListener('click', closeEditModal);
+    document.getElementById('cancelCancelation').addEventListener('click', closeCancelModal);
+    
+    // Controles do mapa
+    document.getElementById('zoomIn').addEventListener('click', () => {
+        if (map) map.zoomIn();
+    });
+    document.getElementById('zoomOut').addEventListener('click', () => {
+        if (map) map.zoomOut();
+    });
+    document.getElementById('centerMap').addEventListener('click', () => {
+        if (map && currentMapCoordinates) {
+            map.setView(currentMapCoordinates, 15);
+        }
+    });
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
     
     // Formulários dos modais
     document.getElementById('editForm').addEventListener('submit', handleEditAgendamento);
@@ -431,8 +454,12 @@ async function handleCreateAgendamento(e) {
         cidade: formData.get('cidade') || document.getElementById('cidade').value,
         linkCoordenadas: coordenadas.trim(),
         observacoes: formData.get('observacoes') || document.getElementById('observacoes').value,
+<<<<<<< HEAD
         prioridade: calculatePriority(formData.get('data') || document.getElementById('data').value, formData.get('horario') || document.getElementById('horario').value),
         editCount: 0 // Inicializar contador de edições
+=======
+        prioridade: calculatePriority(formData.get('data') || document.getElementById('data').value, formData.get('horario') || document.getElementById('horario').value)
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
     };
     
     try {
@@ -555,7 +582,10 @@ function filterAgendamentos() {
             // Apenas agendamentos com status exatamente 'Cancelado'
             filtered = sourceAgendamentos.filter(a => a.status === 'Cancelado');
             break;
+<<<<<<< HEAD
 
+=======
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
     }
     
     console.log(`Filtered ${filtered.length} agendamentos for tab '${currentTab}'`);
@@ -576,8 +606,22 @@ function filterAgendamentos() {
         return;
     }
     
+<<<<<<< HEAD
     // Ordenar por data e horário
     filtered.sort((a, b) => {
+=======
+    // Ordenar por data e horário, mas agrupando compartilhados primeiro
+    filtered.sort((a, b) => {
+        // Primeiro critério: agendamentos compartilhados vêm primeiro
+        const aShared = a.compartilhadoPor ? 1 : 0;
+        const bShared = b.compartilhadoPor ? 1 : 0;
+        
+        if (aShared !== bShared) {
+            return bShared - aShared; // Compartilhados primeiro
+        }
+        
+        // Segundo critério: ordenar por data e horário
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
         const dateA = new Date(`${a.data}T${a.horario}`);
         const dateB = new Date(`${b.data}T${b.horario}`);
         return dateA - dateB;
@@ -613,7 +657,17 @@ function createAgendamentoCard(agendamento) {
     
     const formatDate = new Date(agendamento.data + 'T00:00:00').toLocaleDateString('pt-BR');
     
+<<<<<<< HEAD
 
+=======
+    // Informações de compartilhamento - mostrar no final para aba concluídos
+    const sharedInfo = agendamento.compartilhadoPor && currentTab !== 'concluidos' ? 
+        `<div class="postit-shared-info">Compartilhado por: ${agendamento.compartilhadoPor}</div>` : '';
+    
+    // Informações de compartilhamento no final para aba concluídos
+    const sharedInfoBottom = agendamento.compartilhadoPor && currentTab === 'concluidos' ? 
+        `<div class="postit-shared-info-bottom">Compartilhado por: ${agendamento.compartilhadoPor}</div>` : '';
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
     
     // Justificativa de cancelamento
     const justificativa = agendamento.motivoCancelamento ? 
@@ -629,6 +683,7 @@ function createAgendamentoCard(agendamento) {
             <span><b>Obs.:</b> ${agendamento.observacoes}</span>
         </div>` : '';
     
+<<<<<<< HEAD
     // Informações de compartilhamento recebido (sem ícone)
     const compartilhamentoRecebido = agendamento.compartilhadoPor ? 
         `<div class="postit-row postit-observacao postit-shared-received">
@@ -640,6 +695,11 @@ function createAgendamentoCard(agendamento) {
     
     const cardHTML = `
         <div class="agendamento-card ${statusClass} ${postitStyle} ${shareClass}" data-id="${agendamento.id}" data-shared="${isShared}">
+=======
+    const cardHTML = `
+        <div class="agendamento-card ${statusClass} ${postitStyle} ${shareClass}" data-id="${agendamento.id}" data-shared="${isShared}">
+            ${sharedInfo}
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
             
             <div class="cliente-destaque">
                 <span class="icon"><i class="fa-solid fa-user"></i></span>
@@ -675,7 +735,10 @@ function createAgendamentoCard(agendamento) {
                 </div>
                 ${observacoes}
                 ${justificativa}
+<<<<<<< HEAD
                 ${compartilhamentoRecebido}
+=======
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
             </div>
             
             <div class="postit-footer">
@@ -686,6 +749,7 @@ function createAgendamentoCard(agendamento) {
                     <button class="postit-btn cancelar-btn" onclick="openCancelModal('${agendamento.id}')" title="Cancelar agendamento">
                         <i class="fa-solid fa-times-circle"></i> Cancelar
                     </button>
+<<<<<<< HEAD
                     ${(agendamento.editCount || 0) < MAX_EDIT_COUNT ? `
                         <button class="postit-btn editar-btn" onclick="openEditModal('${agendamento.id}')" title="Editar agendamento (${(agendamento.editCount || 0)}/${MAX_EDIT_COUNT} edições)">
                             <i class="fa-solid fa-edit"></i> Editar
@@ -705,6 +769,17 @@ function createAgendamentoCard(agendamento) {
                 </button>
                 ${agendamento.linkCoordenadas ? `
                     <button class="postit-btn localizacao-btn" onclick="openLocationModal('${agendamento.linkCoordenadas}', '${agendamento.nomeCliente}')" title="Ver localização no mapa">
+=======
+                    <button class="postit-btn editar-btn" onclick="openEditModal('${agendamento.id}')" title="Editar agendamento">
+                        <i class="fa-solid fa-edit"></i> Editar
+                    </button>
+                ` : ''}
+                <button class="postit-btn compartilhar-btn" onclick="openShareModal('${agendamento.id}')" title="Compartilhar agendamento">
+                    <i class="fa-solid fa-share-alt"></i> Compartilhar
+                </button>
+                ${agendamento.linkCoordenadas ? `
+                    <button class="postit-btn localizacao-btn" onclick="openLocationModal('${agendamento.linkCoordenadas}')" title="Ver localização no mapa">
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
                         <i class="fa-solid fa-map-marker-alt"></i> Localização
                     </button>
                 ` : ''}
@@ -712,6 +787,10 @@ function createAgendamentoCard(agendamento) {
                     <i class="fa-solid fa-trash-alt"></i> Excluir
                 </button>
             </div>
+<<<<<<< HEAD
+=======
+            ${sharedInfoBottom}
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
         </div>
     `;
     
@@ -832,6 +911,7 @@ function openEditModal(id) {
     const agendamento = agendamentos.find(a => a.id === id);
     if (!agendamento) return;
     
+<<<<<<< HEAD
     // Verificar se ainda pode ser editado
     const editCount = agendamento.editCount || 0;
     if (editCount >= MAX_EDIT_COUNT) {
@@ -839,6 +919,8 @@ function openEditModal(id) {
         return;
     }
     
+=======
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
     editingAgendamento = agendamento;
     
     // Preencher formulário
@@ -889,8 +971,11 @@ async function handleEditAgendamento(e) {
             linkCoordenadas: coordenadas.trim(),
             observacoes: document.getElementById('editObservacoes').value || '',
             prioridade: calculatePriority(document.getElementById('editData').value, document.getElementById('editHorario').value),
+<<<<<<< HEAD
             // Incrementar contador de edições
             editCount: (editingAgendamento.editCount || 0) + 1,
+=======
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
             // Preservar dados originais importantes
             criadoPor: editingAgendamento.criadoPor,
             criadoEm: editingAgendamento.criadoEm,
@@ -1119,7 +1204,11 @@ function checkForgottenAgendamentos() {
             
             if (minutesLate > 0 && minutesLate % 15 === 0) { // Avisar a cada 15 minutos
                 if (window.TTSNotifications) {
+<<<<<<< HEAD
                     window.TTSNotifications.agendamentoAtrasado(agendamento.nomeCliente, minutesLate, agendamento.atendente);
+=======
+                    window.TTSNotifications.agendamentoAtrasado(agendamento.nomeCliente, minutesLate);
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
                 }
             }
         }
@@ -1130,11 +1219,227 @@ function checkForgottenAgendamentos() {
 
 
 // Modal de localização
+<<<<<<< HEAD
 // Variáveis de mapa movidas para MapModal.js
 
 // Funções de mapa movidas para MapModal.js
 
 // Funções de mapa movidas para MapModal.js
+=======
+let map = null;
+let currentMapCoordinates = null;
+
+function openLocationModal(coordinates) {
+    console.log('=== INÍCIO openLocationModal ===');
+    console.log('Coordenadas recebidas:', coordinates);
+
+    // Verificar se as coordenadas estão presentes
+    if (!coordinates || typeof coordinates !== 'string') {
+        showToast('Coordenadas não fornecidas', 'error');
+        return;
+    }
+
+    // Parsear coordenadas (formato: "lat,lng" ou "lat, lng")
+    const [lat, lng] = coordinates.split(',').map(coord => parseFloat(coord.trim()));
+    if (isNaN(lat) || isNaN(lng)) {
+        showToast('Coordenadas inválidas', 'error');
+        return;
+    }
+
+    const modal = document.getElementById('locationModal');
+    const coordinatesSpan = document.getElementById('currentCoordinates');
+    const citySpan = document.getElementById('currentCity');
+    if (!modal || !coordinatesSpan || !citySpan) {
+        showToast('Erro ao abrir o modal de localização', 'error');
+        return;
+    }
+
+    coordinatesSpan.textContent = `${lat},${lng}`;
+    citySpan.textContent = 'Carregando...';
+    modal.classList.add('show');
+
+    // Buscar nome da cidade usando reverse geocoding
+    fetchCityName(lat, lng).then(cityName => {
+        citySpan.textContent = cityName;
+    }).catch(error => {
+        console.error('Erro ao buscar nome da cidade:', error);
+        citySpan.textContent = 'Localização desconhecida';
+    });
+
+    setTimeout(() => {
+        initializeMap(`${lat},${lng}`);
+    }, 100);
+
+    console.log('=== FIM openLocationModal ===');
+}
+
+function closeLocationModal() {
+    const modal = document.getElementById('locationModal');
+    modal.classList.remove('show');
+    
+    // Destruir o mapa para evitar problemas
+    if (map) {
+        map.remove();
+        map = null;
+        currentMapCoordinates = null;
+    }
+}
+
+function initializeMap(coordinates) {
+    console.log('=== INÍCIO initializeMap ===');
+    console.log('Coordenadas recebidas:', coordinates);
+    
+    // Verificar se o Leaflet está disponível
+    if (typeof L === 'undefined') {
+        console.error('Leaflet não está carregado');
+        showToast('Erro: Biblioteca de mapa não carregada', 'error');
+        return;
+    }
+    
+    // Destruir mapa existente se houver
+    if (map) {
+        console.log('Destruindo mapa existente...');
+        map.remove();
+        map = null;
+    }
+    
+    // Parsear coordenadas (formato: "lat,lng" ou "lat, lng")
+    const [lat, lng] = coordinates.split(',').map(coord => parseFloat(coord.trim()));
+    console.log('Coordenadas parseadas:', { lat, lng });
+    
+    if (isNaN(lat) || isNaN(lng)) {
+        console.error('Coordenadas inválidas após parsing');
+        showToast('Coordenadas inválidas', 'error');
+        return;
+    }
+    
+    currentMapCoordinates = [lat, lng];
+    console.log('Coordenadas atuais definidas:', currentMapCoordinates);
+    
+    // Verificar se o elemento do mapa existe
+    const mapElement = document.getElementById('map');
+    if (!mapElement) {
+        console.error('Elemento do mapa não encontrado');
+        showToast('Erro: Elemento do mapa não encontrado', 'error');
+        return;
+    }
+    
+    try {
+        // Inicializar mapa
+        console.log('Inicializando mapa Leaflet...');
+        map = L.map('map', {
+            zoomControl: false, // Remover controles padrão
+            attributionControl: false // Remover atribuição padrão
+        }).setView([lat, lng], 16); // Zoom mais próximo para melhor visualização
+        
+        console.log('Mapa inicializado com sucesso');
+        
+        // Adicionar camada do OpenStreetMap
+        console.log('Adicionando camada do OpenStreetMap...');
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        console.log('Camada do OpenStreetMap adicionada');
+        
+        // Criar ícone personalizado para o marcador
+        const customIcon = L.divIcon({
+            className: 'custom-marker',
+            html: `
+                <div style="
+                    background: linear-gradient(135deg, #FF6B00 0%, #FF8C00 100%);
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50% 50% 50% 0;
+                    transform: rotate(-45deg);
+                    border: 4px solid white;
+                    box-shadow: 0 4px 12px rgba(255, 107, 0, 0.4);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    position: relative;
+                ">
+                    <div style="
+                        color: white;
+                        font-size: 16px;
+                        font-weight: bold;
+                        transform: rotate(45deg);
+                        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+                    ">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                    </div>
+                </div>
+            `,
+            iconSize: [40, 40],
+            iconAnchor: [20, 40]
+        });
+        
+        console.log('Ícone personalizado criado');
+        
+        // Adicionar marcador personalizado
+        const marker = L.marker([lat, lng], { icon: customIcon })
+            .addTo(map)
+            .openPopup();
+        
+        console.log('Marcador adicionado e popup aberto');
+        
+        // Forçar redimensionamento do mapa
+        setTimeout(() => {
+            if (map) {
+                map.invalidateSize();
+                console.log('Mapa redimensionado');
+            }
+        }, 200);
+        
+        console.log('=== FIM initializeMap (SUCESSO) ===');
+        
+    } catch (error) {
+        console.error('Erro ao inicializar mapa:', error);
+        showToast('Erro ao carregar o mapa: ' + error.message, 'error');
+    }
+}
+
+// Função para buscar o nome da cidade usando reverse geocoding
+async function fetchCityName(lat, lng) {
+    try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`);
+        const data = await response.json();
+        
+        if (data.address) {
+            // Priorizar cidade, depois município, depois localidade
+            const cityName = data.address.city || 
+                           data.address.town || 
+                           data.address.municipality || 
+                           data.address.locality || 
+                           data.address.village ||
+                           data.address.county ||
+                           'Localização desconhecida';
+            
+            return cityName;
+        }
+        
+        return 'Localização desconhecida';
+    } catch (error) {
+        console.error('Erro na busca de cidade:', error);
+        return 'Localização desconhecida';
+    }
+}
+
+function openInGoogleMaps() {
+    const coordinates = document.getElementById('currentCoordinates').textContent;
+    const [lat, lng] = coordinates.split(',').map(coord => parseFloat(coord.trim()));
+    
+    if (!isNaN(lat) && !isNaN(lng)) {
+        const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+        require('electron').shell.openExternal(googleMapsUrl);
+    } else {
+        showToast('Coordenadas inválidas', 'error');
+    }
+}
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
 function copyToClipboard(text) {
     // Verificar se o texto existe
     if (!text || text.trim() === '') {
@@ -1188,7 +1493,11 @@ window.concluirAgendamento = concluirAgendamento;
 window.openEditModal = openEditModal;
 window.openCancelModal = openCancelModal;
 window.copyToClipboard = copyToClipboard;
+<<<<<<< HEAD
 // openLocationModal é gerenciado pelo MapModal.js
+=======
+window.openLocationModal = openLocationModal;
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', function() {
@@ -2317,6 +2626,7 @@ function setupWebSocketEventHandlers() {
     });
 
     // Notificação recebida
+<<<<<<< HEAD
     window.wsClient.on('notification:received', (data) => {
         handleWebSocketNotificationReceived(data);
     });
@@ -2325,6 +2635,9 @@ function setupWebSocketEventHandlers() {
     window.wsClient.on('tts:speak', (data) => {
         handleWebSocketTTSSpeak(data);
     });
+=======
+
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
 }
 
 // Manipular atualização de agendamento via WebSocket
@@ -2367,14 +2680,18 @@ function handleWebSocketAgendamentoUpdate(data) {
 function handleWebSocketAgendamentoShared(data) {
     const { agendamento, fromUser, message } = data;
     
+<<<<<<< HEAD
     console.log('[DEBUG] Agendamento compartilhado recebido:', { agendamento, fromUser, message });
     
+=======
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
     // Adicionar agendamento compartilhado
     if (!agendamentos.find(a => a.id === agendamento.id)) {
         agendamentos.push(agendamento);
         filterAgendamentos();
     }
     
+<<<<<<< HEAD
     // Mostrar notificação TTS
     if (window.TTSNotifications) {
         window.TTSNotifications.agendamentoRecebido(
@@ -2421,6 +2738,10 @@ function handleWebSocketAgendamentoShared(data) {
             ]
         });
     }
+=======
+    // Mostrar notificação
+    showToast(`Agendamento compartilhado por ${fromUser.displayName}`, 'info');
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
 }
 
 // Manipular resultados de busca via WebSocket
@@ -2434,6 +2755,7 @@ function handleWebSocketSearchResults(data) {
     }
 }
 
+<<<<<<< HEAD
 // Manipular notificação recebida via WebSocket
 function handleWebSocketNotificationReceived(data) {
     const { notification, fromUser, timestamp } = data;
@@ -2507,6 +2829,8 @@ function handleWebSocketTTSSpeak(data) {
     showToast(text, 'info');
 }
 
+=======
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
 // Função global para atualizar agendamento via WebSocket
 window.updateAgendamentoFromWebSocket = handleWebSocketAgendamentoUpdate;
 

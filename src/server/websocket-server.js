@@ -498,18 +498,27 @@ class WebSocketServer {
                     message
                 });
 
+<<<<<<< HEAD
                 // Enviar notificação em tempo real com TTS
                 const notificationData = {
+=======
+                // Enviar notificação em tempo real
+                targetSocket.emit('notification:received', {
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
                     notification: {
                         id: `notif_${Date.now()}_${Math.random()}`,
                         title: 'Agendamento Compartilhado',
                         message: `${socket.displayName} compartilhou um agendamento com você`,
+<<<<<<< HEAD
                         type: 'share',
                         tts: {
                             enabled: true,
                             text: `Você recebeu um agendamento de ${agendamento.nomeCliente || agendamento.cliente} de ${socket.displayName}${message ? `. Mensagem: ${message}` : ''}`,
                             priority: 2
                         }
+=======
+                        type: 'share'
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
                     },
                     fromUser: {
                         userId: socket.userId,
@@ -517,6 +526,7 @@ class WebSocketServer {
                         displayName: socket.displayName
                     },
                     timestamp: new Date()
+<<<<<<< HEAD
                 };
 
                 targetSocket.emit('notification:received', notificationData);
@@ -526,6 +536,8 @@ class WebSocketServer {
                     text: `Você recebeu um agendamento de ${agendamento.nomeCliente || agendamento.cliente} de ${socket.displayName}${message ? `. Mensagem: ${message}` : ''}`,
                     priority: 2,
                     type: 'share_received'
+=======
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
                 });
 
                 console.log(`[SHARE] Agendamento compartilhado de ${socket.displayName} para usuário ${toUserId}`);

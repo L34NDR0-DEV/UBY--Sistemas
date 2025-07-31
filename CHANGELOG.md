@@ -64,7 +64,6 @@
 - Notificações visuais de status
 
 ---
-
 ## [1.0.1] - 2024-12-31
 
 ### 🔄 Reset de Versão

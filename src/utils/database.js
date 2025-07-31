@@ -291,6 +291,7 @@ class Database {
     }
 
     async getSyncLog(since = null) {
+<<<<<<< HEAD
         const sql = `
             SELECT * FROM sync_log 
             WHERE timestamp >= ? 
@@ -343,10 +344,29 @@ class Database {
 
     /**
      * Fechar conexão com o banco de dados
+=======
+        let sql = 'SELECT * FROM sync_log ORDER BY timestamp DESC';
+        let params = [];
+        
+        if (since) {
+            sql = 'SELECT * FROM sync_log WHERE timestamp > ? ORDER BY timestamp DESC';
+            params = [since];
+        }
+        
+        return this.all(sql, params);
+    }
+
+    /**
+     * Fechar conexão
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
      */
     close() {
         if (this.db) {
             this.db.close();
+<<<<<<< HEAD
+=======
+            console.log('[CLOSE] Conexão com banco de dados fechada');
+>>>>>>> 01a90c6129e07fa60b9510725f6f97f1cbccfb76
         }
     }
 }

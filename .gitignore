@@ -1,0 +1,118 @@
+# .gitignore
+
+# Dependências
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist/
+build/
+out/
+
+# Logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory usado por ferramentas como istanbul
+coverage/
+
+# Diretório de dependências do npm
+.npm
+
+# Arquivo de configuração do ESLint
+.eslintcache
+
+# Arquivos de configuração do editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Arquivos do sistema operacional
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Arquivos temporários
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Arquivos de backup
+*.bak
+*.backup
+*~
+
+# Arquivos de configuração local
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Cache do Electron
+.electron/
+
+# Arquivos de dados sensíveis (descomente se necessário)
+# src/data/users.json
+# src/data/notifications.json
+
+# Arquivos de build específicos do Electron
+*.blockmap
+*.dmg
+*.exe
+*.deb
+*.rpm
+*.AppImage
+*.snap
+
+# Arquivos de certificado (nunca commitar)
+*.p12
+*.cer
+*.crt
+*.key
+*.pem
+
+# Tokens e chaves (nunca commitar)
+.env.production
+secrets/
+keys/
+
+# Arquivos de teste
+test-results/
+coverage/
+
+# Arquivos de documentação gerados
+docs/generated/
+
+# Cache do sistema
+.cache/
+.parcel-cache/
+
+# Arquivos de lock alternativos
+yarn.lock
+pnpm-lock.yaml
+
+# Diretórios de ferramentas
+.nyc_output/
+.grunt/
+.sass-cache/
+
+# Arquivos específicos do projeto
+installer.nsh.bak
+builder-debug.yml
+builder-effective-config.yaml

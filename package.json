@@ -1,0 +1,79 @@
+{
+  "name": "uby-agendamentos",
+  "version": "1.0.2",
+  "description": "Sistema profissional de gestão de agendamentos desenvolvido com Electron",
+  "main": "app/main.js",
+  "author": "L34NDR0-DEV",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "websocket": "node src/server/start-websocket-server.js",
+    "server": "node src/server/server.js",
+    "auto-websocket": "node src/server/auto-start-websocket.js",
+    "check-websocket": "node src/server/check-websocket.js",
+    "test-websocket": "node src/server/test-websocket-connection.js",
+    "dev-full": "concurrently \"npm run websocket\" \"npm run dev\"",
+    "dev-with-server": "concurrently \"npm run server\" \"npm run dev\"",
+    "dev-with-auto": "concurrently \"npm run auto-websocket\" \"npm run dev\"",
+    "dev-with-check": "node check-websocket.js && npm run dev",
+    "start-complete": "scripts\\start-complete.bat",
+    "start-system": "scripts\\start-system.bat",
+    "start-websocket": "scripts\\start-websocket-only.bat",
+    "build": "electron-builder",
+    "build-win": "electron-builder --win",
+    "build-mac": "electron-builder --mac",
+    "build-linux": "electron-builder --linux",
+    "publish": "electron-builder --publish=always",
+    "clean": "rimraf dist build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "dependencies": {
+    "electron-log": "^5.0.0",
+    "electron-store": "^8.1.0",
+    "electron-updater": "^6.0.0",
+    "express": "^4.18.0",
+    "socket.io": "^4.7.0",
+    "socket.io-client": "^4.8.1",
+    "sqlite3": "^5.1.0",
+    "uuid": "^10.0.0"
+  },
+  "build": {
+    "appId": "com.uby.agendamentos",
+    "productName": "UBY Agendamentos",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "app/**/*",
+      "src/**/*",
+      "assets/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "src/assets/logo.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "src/assets/logo.ico"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "src/assets/logo.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "L34NDR0-DEV",
+      "repo": "uby-agendamentos"
+    }
+  }
+}

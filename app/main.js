@@ -620,8 +620,8 @@ ipcMain.on('restart-app', () => {
 
 // Configurar autoUpdater
 autoUpdater.checkForUpdatesAndNotify = false; // Desabilitar verificação automática
-autoUpdater.autoDownload = false; // Não baixar automaticamente
-autoUpdater.autoInstallOnAppQuit = false; // Não instalar automaticamente
+autoUpdater.autoDownload = true; // Não baixar automaticamente
+autoUpdater.autoInstallOnAppQuit = true; // Não instalar automaticamente
 
 // Configuração para desenvolvimento
 const isDevelopment = process.env.NODE_ENV === 'development' || !app.isPackaged;
